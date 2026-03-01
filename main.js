@@ -2,106 +2,145 @@ class LottoGenerator extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
+        this.render();
+    }
+
+    render() {
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
                     display: block;
-                    --primary-color: #4a90e2;
-                    --secondary-color: #f5a623;
-                    --white: #ffffff;
-                    --grey: #f0f2f5;
-                    --text-color: #333;
                 }
 
                 .container {
-                    background: var(--white);
-                    padding: 2rem;
-                    border-radius: 15px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                    background: var(--card-bg, #ffffff);
+                    color: var(--text-color, #333);
+                    padding: 2.5rem;
+                    border-radius: 20px;
+                    box-shadow: 0 10px 40px var(--shadow-color);
                     text-align: center;
-                    max-width: 400px;
-                    margin: 20px;
+                    width: 100%;
+                    max-width: 450px;
+                    transition: all 0.3s ease;
                 }
 
                 h2 {
                     color: var(--primary-color);
-                    font-weight: 600;
-                    font-size: 1.8rem;
-                    margin-bottom: 1rem;
+                    font-size: 2rem;
+                    margin-bottom: 1.5rem;
+                    letter-spacing: -0.5px;
                 }
 
-                button {
+                .generate-btn {
                     background: var(--primary-color);
-                    color: var(--white);
+                    color: white;
                     border: none;
-                    padding: 0.8rem 1.5rem;
-                    border-radius: 8px;
-                    font-size: 1rem;
+                    padding: 1rem 2rem;
+                    border-radius: 12px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
                     cursor: pointer;
-                    transition: background 0.3s ease, transform 0.2s ease;
-                    margin-bottom: 1rem;
+                    transition: all 0.3s ease;
+                    margin-bottom: 2rem;
+                    box-shadow: 0 4px 15px var(--shadow-color);
                 }
 
-                button:hover {
-                    background: #357abd;
+                .generate-btn:hover {
+                    opacity: 0.9;
                     transform: translateY(-2px);
+                }
+
+                .generate-btn:active {
+                    transform: translateY(0);
                 }
 
                 .numbers {
                     display: flex;
                     flex-wrap: wrap;
                     justify-content: center;
-                    gap: 0.5rem;
+                    gap: 12px;
+                    min-height: 60px;
                 }
 
-                .number {
-                    width: 50px;
-                    height: 50px;
-                    background: var(--secondary-color);
-                    color: var(--white);
+                .ball {
+                    width: 55px;
+                    height: 55px;
                     border-radius: 50%;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    font-size: 1.5rem;
-                    font-weight: bold;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    font-size: 1.4rem;
+                    font-weight: 800;
+                    color: white;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+                    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.15), 
+                                4px 4px 10px rgba(0,0,0,0.2);
                     transform: scale(0);
-                    animation: pop-in 0.5s ease forwards;
+                    animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
                 }
 
                 @keyframes pop-in {
-                    to {
-                        transform: scale(1);
-                    }
+                    to { transform: scale(1); }
                 }
+
+                /* Ball Colors */
+                .ball.range-1 { background: var(--ball-1); }
+                .ball.range-11 { background: var(--ball-11); }
+                .ball.range-21 { background: var(--ball-21); }
+                .ball.range-31 { background: var(--ball-31); }
+                .ball.range-41 { background: var(--ball-41); }
             </style>
             <div class="container">
-                <h2>Lotto Number Generator</h2>
-                <button>Generate Numbers</button>
-                <div class="numbers"></div>
+                <h2>Lotto Numbers</h2>
+                <button class="generate-btn">Lucky Draw ✨</button>
+                <div class="numbers" id="numbers-display"></div>
             </div>
         `;
 
-        this.shadowRoot.querySelector('button').addEventListener('click', () => this.generateNumbers());
+        this.shadowRoot.querySelector('.generate-btn').addEventListener('click', () => this.generateNumbers());
+    }
+
+    getBallColorClass(num) {
+        if (num <= 10) return 'range-1';
+        if (num <= 20) return 'range-11';
+        if (num <= 30) return 'range-21';
+        if (num <= 40) return 'range-31';
+        return 'range-41';
     }
 
     generateNumbers() {
-        const numbersContainer = this.shadowRoot.querySelector('.numbers');
-        numbersContainer.innerHTML = '';
+        const display = this.shadowRoot.getElementById('numbers-display');
+        display.innerHTML = '';
+        
         const numbers = new Set();
         while (numbers.size < 6) {
             numbers.add(Math.floor(Math.random() * 45) + 1);
         }
 
-        Array.from(numbers).sort((a,b) => a-b).forEach((number, index) => {
-            const numberElement = document.createElement('div');
-            numberElement.classList.add('number');
-            numberElement.textContent = number;
-            numberElement.style.animationDelay = `${index * 0.1}s`;
-            numbersContainer.appendChild(numberElement);
+        const sortedNumbers = Array.from(numbers).sort((a, b) => a - b);
+        
+        sortedNumbers.forEach((num, index) => {
+            const ball = document.createElement('div');
+            ball.className = `ball ${this.getBallColorClass(num)}`;
+            ball.textContent = num;
+            ball.style.animationDelay = `${index * 0.1}s`;
+            display.appendChild(ball);
         });
     }
 }
 
 customElements.define('lotto-generator', LottoGenerator);
+
+// Theme Toggle Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const themeBtn = document.createElement('button');
+    themeBtn.className = 'theme-toggle';
+    themeBtn.innerHTML = 'Toggle Theme 🌙';
+    document.body.appendChild(themeBtn);
+
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        themeBtn.innerHTML = isDark ? 'Toggle Theme ☀️' : 'Toggle Theme 🌙';
+    });
+});
