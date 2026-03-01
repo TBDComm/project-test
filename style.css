@@ -1,1 +1,9 @@
-/* Add styles here */
+body {
+    background-color: #f0f2f5;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
