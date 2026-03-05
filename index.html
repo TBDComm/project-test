@@ -3,14 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lotto Number Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <title>University Course Registration System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href='/style.css' rel='stylesheet'>
 </head>
 <body>
-  
-  <lotto-generator></lotto-generator>
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <span class="icon">🎓</span>
+        <h1>Korea University Port</h1>
+      </div>
+      <div class="user-info">
+        <span class="user-name">김민수 (20240001)</span>
+        <span class="credits-info">신청학점: <strong id="total-credits">0</strong> / 21</span>
+      </div>
+    </div>
+  </header>
 
-  <script defer type="text/javascript" src="/main.js"></script>
+  <main class="main-content">
+    <div class="left-panel">
+      <section class="search-section">
+        <div class="section-title">강의 조회</div>
+        <div class="search-bar">
+          <input type="text" id="course-search-input" placeholder="강의명 또는 교수명을 입력하세요...">
+          <button id="search-btn">🔍</button>
+        </div>
+      </section>
+      
+      <section class="course-list-section">
+        <div class="section-title">개설 강좌 목록</div>
+        <div id="course-list-container" class="scrollable-container">
+          <!-- Courses will be rendered here via Web Components or JS -->
+        </div>
+      </section>
+    </div>
+
+    <div class="right-panel">
+      <section class="timetable-section">
+        <div class="section-title">실시간 시간표</div>
+        <div id="timetable-container" class="timetable-grid">
+          <!-- Timetable Grid -->
+        </div>
+      </section>
+
+      <section class="cart-section">
+        <div class="section-title">수강 신청 내역</div>
+        <div id="cart-container" class="scrollable-container">
+          <!-- Cart items will be rendered here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script defer type="module" src="/main.js"></script>
 </body>
 </html>
