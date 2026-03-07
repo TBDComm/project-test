@@ -6,6 +6,7 @@
   <title>Timing Report — MOMENTO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/theme-init.js"></script>
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
@@ -40,7 +41,7 @@
   <!-- 플랜 잠금 -->
   <div id="plan-locked" class="hidden" style="padding-top: 40px;">
     <div class="upgrade-prompt">
-      <div class="up-icon">—</div>
+      <div class="up-icon">◇</div>
       <h2 class="up-title">Timing Report는 STARTER 플랜부터 사용 가능합니다</h2>
       <p class="up-desc">
         영상 주제의 시장 현황, 포화도, 최근 업로드 빈도, 주목받은 타이밍을<br>
@@ -82,7 +83,7 @@
       <section id="result-panel">
 
         <div id="result-empty" class="empty-state" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl);">
-          <div class="empty-icon">—</div>
+          <div class="empty-icon">◇</div>
           <div class="empty-title">시장 현황이 여기에 표시됩니다</div>
           <div class="empty-desc">왼쪽에 영상 주제를 입력하고 분석을 시작하세요.</div>
         </div>
@@ -94,7 +95,7 @@
 
         <div id="result-error" class="hidden">
           <div class="alert alert-error" style="border-radius: var(--radius-xl); padding: 24px;">
-            <span>!</span>
+            <span>✕</span>
             <div id="result-error-msg"></div>
           </div>
         </div>

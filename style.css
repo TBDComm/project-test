@@ -43,6 +43,44 @@
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* --- 0-1. 라이트 모드 테마 --- */
+[data-theme="light"] {
+  --bg-0: #F5F5FA;
+  --bg-1: #EEEEF5;
+  --bg-2: #E5E5EF;
+  --card: #FFFFFF;
+  --card-hover: #F8F8FD;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --text-1: #0A0A16;
+  --text-2: #5C5C74;
+  --text-3: #9090A8;
+  --shadow-card: 0 4px 32px rgba(0, 0, 0, 0.06);
+  --shadow-purple: 0 0 48px rgba(123, 94, 228, 0.08);
+  --shadow-btn: 0 4px 20px rgba(123, 94, 228, 0.3);
+}
+
+[data-theme="light"] .navbar {
+  background: rgba(245, 245, 250, 0.92);
+}
+
+[data-theme="light"] .nav-link:hover,
+[data-theme="light"] .nav-link.active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.09);
+}
+
+[data-theme="light"] .btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 /* --- 1. 리셋 & 기본 --- */
 *, *::before, *::after {
   box-sizing: border-box;

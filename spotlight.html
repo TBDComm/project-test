@@ -6,6 +6,7 @@
   <title>Spotlight Compare — MOMENTO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/theme-init.js"></script>
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
@@ -47,7 +48,7 @@
     <!-- 사용 한도 초과 시 -->
     <div id="limit-exceeded" class="hidden">
       <div class="upgrade-prompt">
-        <div class="up-icon">—</div>
+        <div class="up-icon">◇</div>
         <h2 class="up-title">이번 달 무료 횟수를 모두 사용했습니다</h2>
         <p class="up-desc">
           무료 플랜은 월 5회 Spotlight Compare를 제공합니다.<br>
@@ -123,7 +124,7 @@
         <!-- 에러 -->
         <div id="result-error" class="hidden">
           <div class="alert alert-error" style="border-radius: var(--radius-xl); padding: 24px;">
-            <span>!</span>
+            <span>✕</span>
             <div id="result-error-msg"></div>
           </div>
         </div>
@@ -144,7 +145,7 @@
             <div class="compare-table-header">
               <div class="table-col-head col-spotlight">
                 <span>✦</span>
-                스포트 패턴 (상위 20개)
+                지금 인기 영상 패턴 (상위 20개)
               </div>
               <div class="table-col-head col-mine">
                 내 영상

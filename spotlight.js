@@ -215,14 +215,14 @@ function renderResult(a, myTitle, myThumbText, categoryId) {
   const myTitleLen = myTitle.length;
   const avgLen = a.titleLengthAvg;
   const diff = myTitleLen - avgLen;
-  const diffStr = diff > 0 ? `+${diff}자` : `${diff}자`;
 
   document.getElementById('sp-title-length').textContent = `평균 ${avgLen}자`;
   document.getElementById('sp-title-length-sub').textContent =
-    `범위: ${a.titleLengthRange} · 상위 70%: ${a.titleLengthPct70}`;
+    `분포 범위: ${a.titleLengthRange} · 주요 구간: ${a.titleLengthPct70}`;
   document.getElementById('my-title-length').textContent = `${myTitleLen}자`;
   document.getElementById('my-title-length-sub').textContent =
-    `평균 대비 ${diff === 0 ? '동일' : diffStr}`;
+    diff === 0 ? '인기 영상 평균과 길이가 같아요' :
+    diff > 0 ? `인기 영상보다 ${diff}자 더 길어요` : `인기 영상보다 ${Math.abs(diff)}자 더 짧아요`;
 
   // --- 구조 유형 ---
   const topStructPct = pct(a.structureCounts[a.topStructure] || 0, a.total);
@@ -232,7 +232,7 @@ function renderResult(a, myTitle, myThumbText, categoryId) {
   const myStructure = detectTitleStructure(myTitle);
   document.getElementById('my-structure').textContent = myStructure;
   document.getElementById('my-structure-sub').textContent =
-    myStructure === a.topStructure ? '스포트 상위와 동일한 유형' : '스포트 상위와 다른 유형';
+    myStructure === a.topStructure ? '지금 인기 영상들과 같은 유형이에요' : '지금 인기 영상들과 다른 유형이에요';
 
   // --- 감정 트리거 ---
   const topEmotPct = pct(a.emotionCounts[a.topEmotion] || 0, a.total);
@@ -242,7 +242,7 @@ function renderResult(a, myTitle, myThumbText, categoryId) {
   const myEmotion = detectEmotionTrigger(myTitle);
   document.getElementById('my-emotion').textContent = myEmotion;
   document.getElementById('my-emotion-sub').textContent =
-    myEmotion === a.topEmotion ? '스포트 상위와 동일한 유형' : '스포트 상위와 다른 유형';
+    myEmotion === a.topEmotion ? '지금 인기 영상들과 같은 분위기예요' : '지금 인기 영상들과 다른 분위기예요';
 
   // --- 썸네일 텍스트 ---
   const thumbLens = [8, 10, 12, 9, 11, 7]; // 실제 API에서는 description 참조
@@ -263,7 +263,7 @@ function renderResult(a, myTitle, myThumbText, categoryId) {
   const timingStr = a.topTimings.length ? a.topTimings.join(', ') : '데이터 없음';
   document.getElementById('sp-timing').textContent = timingStr;
   document.getElementById('sp-timing-sub').textContent =
-    `상위 ${a.total}개 영상 중 집중 업로드 시간대`;
+    `인기 영상 ${a.total}개의 주요 업로드 시간대예요`;
 }
 
 // 바 차트 렌더링

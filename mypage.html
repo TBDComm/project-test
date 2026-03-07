@@ -6,6 +6,7 @@
   <title>마이페이지 — MOMENTO</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/theme-init.js"></script>
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
@@ -47,13 +48,16 @@
       <!-- 사이드바 -->
       <aside class="mypage-sidebar">
         <button class="mypage-nav-item active" data-section="profile">
-          👤 프로필
+          ◇ 프로필
         </button>
         <button class="mypage-nav-item" data-section="subscription">
-          💳 구독 관리
+          ◇ 구독 관리
         </button>
         <button class="mypage-nav-item" data-section="usage">
-          📊 사용 현황
+          ◇ 사용 현황
+        </button>
+        <button class="mypage-nav-item" data-section="settings">
+          ◇ 설정
         </button>
       </aside>
 
@@ -122,7 +126,7 @@
             </div>
 
             <div class="alert alert-warning" style="margin-bottom: 24px;">
-              <span>⚠️</span>
+              <span>!</span>
               <div>
                 해지 후에도 결제한 달 말까지는 현재 플랜을 계속 이용할 수 있습니다.
               </div>
@@ -145,6 +149,22 @@
                 <button class="btn btn-danger" id="confirm-cancel-btn">네, 해지합니다</button>
                 <button class="btn btn-secondary" id="abort-cancel-btn">취소</button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 설정 -->
+        <div id="section-settings" class="mypage-section">
+          <div class="card">
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 20px;">화면 설정</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border);">
+              <div>
+                <div style="font-size: 14px; font-weight: 600;">화면 모드</div>
+                <div style="font-size: 13px; color: var(--text-2); margin-top: 3px;">다크 모드와 라이트 모드 중 선택하세요.</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="theme-toggle-btn">
+                <span id="theme-label">다크 모드</span>
+              </button>
             </div>
           </div>
         </div>
@@ -181,9 +201,8 @@
 </main>
 
 <script type="module">
-import { auth, db } from './firebase-config.js';
+import { supabase } from './supabase-config.js';
 import { requireAuth, logout, PLANS, getRemainingUses } from './utils.js';
-import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 let globalUser = null;
 let globalUserData = null;
@@ -198,6 +217,7 @@ requireAuth((user, userData) => {
   renderProfile(user, userData);
   renderSubscription(userData);
   renderUsage(userData);
+  renderTheme();
 });
 
 document.getElementById('logout-btn').addEventListener('click', logout);
@@ -215,15 +235,14 @@ document.querySelectorAll('.mypage-nav-item').forEach(btn => {
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
 function renderProfile(user, userData) {
-  const name = user.displayName || user.email?.split('@')[0] || '크리에이터';
+  const name = user.user_metadata?.full_name || user.email?.split('@')[0] || '크리에이터';
   document.getElementById('profile-avatar').textContent = name[0].toUpperCase();
   document.getElementById('profile-name').textContent   = name;
   document.getElementById('profile-email').textContent  = user.email || '';
   document.getElementById('profile-plan').textContent   = PLANS[userData.plan]?.name || '무료';
 
-  if (userData.createdAt) {
-    const d = userData.createdAt.toDate?.() || new Date(userData.createdAt);
-    document.getElementById('profile-joined').textContent = dateFormatter.format(d);
+  if (user.created_at) {
+    document.getElementById('profile-joined').textContent = dateFormatter.format(new Date(user.created_at));
   }
 }
 
@@ -236,15 +255,15 @@ function renderSubscription(userData) {
     document.getElementById('sub-free-section').classList.remove('hidden');
     document.getElementById('sub-paid-section').classList.add('hidden');
   } else {
-    const end = userData.subscriptionEnd?.toDate?.() || new Date(userData.subscriptionEnd || Date.now());
+    const end = new Date(userData.subscriptionEnd || Date.now());
     const endStr = dateFormatter.format(end);
     document.getElementById('sub-plan-note').textContent = `${endStr}까지 구독 중`;
 
     document.getElementById('sub-free-section').classList.add('hidden');
     document.getElementById('sub-paid-section').classList.remove('hidden');
-    document.getElementById('next-billing').textContent  = endStr;
+    document.getElementById('next-billing').textContent   = endStr;
     document.getElementById('billing-amount').textContent = PLANS[plan].price.toLocaleString('ko-KR') + '원';
-    document.getElementById('cancel-until').textContent  = endStr;
+    document.getElementById('cancel-until').textContent   = endStr;
   }
 }
 
@@ -265,6 +284,20 @@ function renderUsage(userData) {
     : `이번 달 ${remaining}회 남았습니다. 다음 달 1일에 5회로 초기화됩니다.`;
 }
 
+// 테마 토글
+function renderTheme() {
+  const t = localStorage.getItem('momento_theme') || 'dark';
+  document.getElementById('theme-label').textContent = t === 'dark' ? '다크 모드' : '라이트 모드';
+}
+
+document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
+  const current = localStorage.getItem('momento_theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('momento_theme', next);
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('theme-label').textContent = next === 'dark' ? '다크 모드' : '라이트 모드';
+});
+
 // 해지 버튼
 document.getElementById('cancel-btn')?.addEventListener('click', () => {
   document.getElementById('cancel-confirm').classList.remove('hidden');
@@ -280,11 +313,7 @@ document.getElementById('confirm-cancel-btn')?.addEventListener('click', async (
   btn.disabled = true;
 
   try {
-    // 구독 해지 처리: 만료일 이후 free로 전환되도록 플래그 설정
-    // 실제 결제 해지는 토스페이먼츠 웹훅 + 서버 사이드 처리 필요
-    await updateDoc(doc(db, 'users', globalUser.uid), {
-      cancelRequested: true,
-    });
+    await supabase.from('users').update({ cancel_requested: true }).eq('id', globalUser.id);
 
     document.getElementById('cancel-confirm').classList.add('hidden');
     document.getElementById('sub-paid-section').insertAdjacentHTML('afterbegin', `
