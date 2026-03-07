@@ -30,8 +30,6 @@ export async function getUserData(uid) {
     .eq('id', uid)
     .single();
 
-  console.log('[getUserData] uid:', uid, 'data:', data, 'error:', error);
-
   if (error || !data) {
     const newUser = {
       id: uid,
