@@ -1,7 +1,6 @@
 // spotlight.js — Spotlight Compare 분석 로직
 import { requireAuth, canUseFeature, getRemainingUses, incrementUsage, logout,
-         detectTitleStructure, detectEmotionTrigger, getDateBefore } from './utils.js';
-import { YOUTUBE_API_KEY } from './supabase-config.js';
+         detectTitleStructure, detectEmotionTrigger } from './utils.js';
 
 const CATEGORY_LABELS = {
   '22': '브이로그', '20': '게임', '27': '교육',
@@ -98,33 +97,27 @@ function setCache(key, data) {
   try { localStorage.setItem('yt_cache_' + key, JSON.stringify({ ts: Date.now(), data })); } catch {}
 }
 
-// YouTube API로 트렌딩 영상 가져오기
+// YouTube API로 트렌딩 영상 가져오기 (서버 프록시 경유)
 async function fetchTrendingVideos(categoryId) {
-  // API 키 미설정 시 데모 데이터 반환
-  if (YOUTUBE_API_KEY === 'YOUR_YOUTUBE_API_KEY') {
-    return getDemoVideos(categoryId);
-  }
-
   const cacheKey = `spotlight_${categoryId}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=KR&videoCategoryId=${categoryId}&maxResults=20&key=${YOUTUBE_API_KEY}`;
-
+  const url = `/api/youtube?_ep=videos&part=snippet,statistics&chart=mostPopular&regionCode=KR&videoCategoryId=${categoryId}&maxResults=20`;
   const res = await fetch(url);
   const data = await res.json();
 
   if (data.error) {
-    throw new Error(`YouTube API 오류: ${data.error.message}`);
+    throw new Error(data.error.message || '데이터를 불러오지 못했습니다.');
   }
 
   if (!data.items?.length) {
-    // 해당 카테고리에 데이터가 부족하면 카테고리 없이 재시도
+    // 해당 카테고리 데이터가 없으면 전체 급상승 기준으로 재시도
     const fallbackKey = 'spotlight_all';
     const cachedFallback = getCached(fallbackKey);
     if (cachedFallback) return cachedFallback;
 
-    const url2 = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=KR&maxResults=20&key=${YOUTUBE_API_KEY}`;
+    const url2 = `/api/youtube?_ep=videos&part=snippet,statistics&chart=mostPopular&regionCode=KR&maxResults=20`;
     const res2 = await fetch(url2);
     const data2 = await res2.json();
     if (!data2.items?.length) throw new Error('데이터를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.');
@@ -316,37 +309,3 @@ function showError(msg) {
   document.getElementById('analyze-btn').textContent = '비교 분석 시작';
 }
 
-// API 키 미설정 시 데모 데이터
-function getDemoVideos(categoryId) {
-  const demoTitles = [
-    { title: '제주도 혼자 여행했더니 생긴 일 TOP 5', publishedAt: '2026-03-04T10:00:00Z' },
-    { title: '강남에서 1박 2일 3만원으로 살아남기!', publishedAt: '2026-03-04T12:00:00Z' },
-    { title: '왜 요즘 20대는 이걸 선택할까?', publishedAt: '2026-03-05T11:00:00Z' },
-    { title: '3시간 동안 혼자 해봤는데 이렇게 됨 ㅋㅋ', publishedAt: '2026-03-05T14:00:00Z' },
-    { title: '7가지 방법으로 효율 2배 올리기', publishedAt: '2026-03-03T18:00:00Z' },
-    { title: '실제로 써보니까 진짜였음 (솔직 리뷰)', publishedAt: '2026-03-03T19:00:00Z' },
-    { title: '충격! 아무도 몰랐던 숨겨진 사실', publishedAt: '2026-03-06T09:00:00Z' },
-    { title: '5가지 실수로 다 망했습니다 (경험담)', publishedAt: '2026-03-06T10:00:00Z' },
-    { title: '혼자 해보는 30일 챌린지 1일차~30일차', publishedAt: '2026-03-02T15:00:00Z' },
-    { title: '10만원으로 만든 홈카페 브이로그', publishedAt: '2026-03-02T16:00:00Z' },
-    { title: '왜 이게 더 맛있는 건지 모르겠음', publishedAt: '2026-03-01T20:00:00Z' },
-    { title: '6개월 만에 체중 15kg 감량한 방법', publishedAt: '2026-03-01T21:00:00Z' },
-    { title: '이 방법으로 3달 만에 구독자 10만 달성', publishedAt: '2026-02-28T13:00:00Z' },
-    { title: '솔직히 말해줄게요, 나도 힘들었어', publishedAt: '2026-02-28T14:00:00Z' },
-    { title: '최악의 숙소에서 하룻밤 보내기', publishedAt: '2026-02-27T17:00:00Z' },
-    { title: '4가지 방법 중에 이게 제일 좋았음', publishedAt: '2026-02-27T18:00:00Z' },
-    { title: '서울 vs 부산, 어디가 더 살기 좋아?', publishedAt: '2026-03-06T11:00:00Z' },
-    { title: '내가 절대 안 하는 실수 8가지', publishedAt: '2026-03-06T12:00:00Z' },
-    { title: '진짜 이런 방법이 있었어? 대박이다', publishedAt: '2026-03-05T08:00:00Z' },
-    { title: '처음 해봤는데 이렇게 잘 됨?!', publishedAt: '2026-03-05T09:00:00Z' },
-  ];
-
-  return demoTitles.map((item, i) => ({
-    snippet: {
-      title: item.title,
-      publishedAt: item.publishedAt,
-    },
-    statistics: { viewCount: String(Math.floor(Math.random() * 900000) + 100000) },
-    id: `demo_${i}`,
-  }));
-}
