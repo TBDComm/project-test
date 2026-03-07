@@ -57,6 +57,7 @@ export async function getUserData(uid) {
     monthlyUsage: data.monthly_usage,
     usageMonth: data.usage_month,
     subscriptionEnd: data.subscription_end,
+    isAdmin: data.is_admin || false,
   };
 }
 
@@ -76,6 +77,7 @@ export async function incrementUsage(uid) {
 
 // 기능 사용 가능 여부 확인
 export function canUseFeature(userData, feature) {
+  if (userData.isAdmin) return true;
   const plan = userData.plan || 'free';
   if (feature === 'spotlight') {
     if (plan !== 'free') return true;
@@ -89,7 +91,7 @@ export function canUseFeature(userData, feature) {
 
 // 이번 달 남은 Spotlight 횟수
 export function getRemainingUses(userData) {
-  if (userData.plan !== 'free') return Infinity;
+  if (userData.isAdmin || userData.plan !== 'free') return Infinity;
   return Math.max(0, PLANS.free.monthlyLimit - (userData.monthlyUsage || 0));
 }
 

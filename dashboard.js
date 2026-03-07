@@ -5,9 +5,9 @@ requireAuth((user, userData) => {
   document.getElementById('auth-loading').classList.add('hidden');
   document.getElementById('dashboard-content').classList.remove('hidden');
 
-  const plan = userData.plan || 'free';
+  const isAdmin = userData.isAdmin || false;
+  const plan = isAdmin ? 'pro' : (userData.plan || 'free');
   const usage = userData.monthlyUsage || 0;
-  const limit = PLANS[plan]?.monthlyLimit ?? 5;
   const remaining = getRemainingUses(userData);
 
   // 이름
@@ -26,8 +26,8 @@ requireAuth((user, userData) => {
       : '무제한 사용 가능';
 
   // 플랜
-  document.getElementById('plan-name').textContent = PLANS[plan]?.name || '무료';
-  document.getElementById('plan-note').textContent =
+  document.getElementById('plan-name').textContent = isAdmin ? 'ADMIN' : (PLANS[plan]?.name || '무료');
+  document.getElementById('plan-note').textContent = isAdmin ? '모든 기능 무제한' :
     plan === 'free'    ? '월 5회 Spotlight Compare' :
     plan === 'starter' ? 'Spotlight 무제한 + Timing Report' :
                          '모든 기능 포함';
