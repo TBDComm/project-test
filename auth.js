@@ -101,14 +101,23 @@ document.getElementById('email-signup-btn').addEventListener('click', async () =
   btn.textContent = '가입 중...';
   btn.disabled = true;
 
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
     showError('signup-error', authErrorMsg(error.message));
     btn.textContent = '무료로 시작하기';
     btn.disabled = false;
-  } else {
+  } else if (data.session) {
+    // 이메일 인증 불필요 — 바로 대시보드로
     window.location.href = redirect;
+  } else {
+    // 이메일 인증 필요 — 안내 메시지 표시
+    btn.textContent = '무료로 시작하기';
+    btn.disabled = false;
+    const el = document.getElementById('signup-error');
+    el.textContent = '가입이 완료됐습니다! 받은 메일함에서 인증 링크를 클릭한 후 로그인해주세요.';
+    el.style.color = 'var(--text-1)';
+    el.classList.remove('hidden');
   }
 });
 
