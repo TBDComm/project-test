@@ -1,3 +1,33 @@
+class ThemeManager {
+  constructor() {
+    this.themeToggle = document.getElementById('theme-toggle');
+    this.body = document.body;
+    this.currentTheme = localStorage.getItem('theme') || 'light';
+    this.init();
+  }
+
+  init() {
+    this.applyTheme(this.currentTheme);
+    this.themeToggle.addEventListener('click', () => this.toggleTheme());
+  }
+
+  toggleTheme() {
+    this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+    this.applyTheme(this.currentTheme);
+    localStorage.setItem('theme', this.currentTheme);
+    
+    // Notify Disqus if needed (Disqus often handles this via its own internal logic or a reset)
+    if (window.DISQUS) {
+      window.DISQUS.reset({ reload: true });
+    }
+  }
+
+  applyTheme(theme) {
+    this.body.className = `${theme}-theme`;
+    this.themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+}
+
 class YouTubeAnalyzer {
   constructor() {
     this.urlInput = document.getElementById('youtube-url');
@@ -36,10 +66,7 @@ class YouTubeAnalyzer {
     }
 
     this.showLoading();
-
-    // Mock API Delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-
     this.renderAnalysis(videoId);
   }
 
@@ -55,17 +82,16 @@ class YouTubeAnalyzer {
   renderAnalysis(videoId) {
     this.videoEmbed.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
     
-    // Mock Data
     const mockData = {
-      title: "AI가 분석한 추천 영상 통찰",
-      sentiment: "84%",
-      engagement: "Extremely High",
+      title: "AI가 분석한 실시간 인사이트",
+      sentiment: "89%",
+      engagement: "매우 높음",
       summary: [
-        "이 영상은 최신 기술 트렌드와 사용자 경험의 결합을 심도 있게 다룹니다.",
-        "주요 타겟층은 2030 테크 애호가들이며, 긍정적인 반응이 지배적입니다.",
-        "영상 중반부의 시각적 연출이 시청자 유지율을 크게 높이는 요소로 작용했습니다."
+        "영상의 핵심 주제는 차세대 기술과 인문학의 융합입니다.",
+        "시청자들의 반응은 기술적 완성도에 대해 매우 긍정적입니다.",
+        "특히 3분 15초 지점의 데모 장면에서 가장 높은 몰입도가 관찰되었습니다."
       ],
-      keywords: ["인공지능", "미래기술", "사용자경험", "트렌드분석", "혁신", "디지털트랜스포메이션"]
+      keywords: ["혁신", "테크", "AI", "트렌드", "분석", "미래"]
     };
 
     this.videoTitle.textContent = mockData.title;
@@ -84,16 +110,13 @@ class PartnershipModal {
     this.modal = document.getElementById('partnership-modal');
     this.openBtn = document.getElementById('partnership-btn');
     this.closeBtn = document.getElementById('close-modal-btn');
-
     this.init();
   }
 
   init() {
     if (!this.modal || !this.openBtn || !this.closeBtn) return;
-
     this.openBtn.addEventListener('click', () => this.modal.showModal());
     this.closeBtn.addEventListener('click', () => this.modal.close());
-
     this.modal.addEventListener('click', (e) => {
       const rect = this.modal.getBoundingClientRect();
       if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
@@ -104,6 +127,7 @@ class PartnershipModal {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  new ThemeManager();
   new YouTubeAnalyzer();
   new PartnershipModal();
 });

@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href='/style.css' rel='stylesheet'>
 </head>
-<body class="theme-light">
+<body class="light-theme">
   <header class="app-header">
     <div class="header-container">
       <div class="logo">
@@ -15,6 +15,7 @@
         <h1>AI Video Analyzer</h1>
       </div>
       <div class="nav-actions">
+        <button id="theme-toggle" class="icon-btn" aria-label="테마 전환">☀️</button>
         <button id="partnership-btn" class="secondary-btn">🤝 제휴 문의</button>
       </div>
     </div>
@@ -70,8 +71,8 @@
 
     <!-- Community Section (Disqus) -->
     <section class="community-section card">
-      <div class="card-header">커뮤니티 토론</div>
-      <div id="disqus_thread"></div>
+      <div class="card-header">💬 커뮤니티 토론</div>
+      <div id="disqus_thread" style="min-height: 200px; width: 100%;"></div>
     </section>
   </main>
 
@@ -114,11 +115,7 @@
 
   <!-- Optimized Disqus Script Integration -->
   <script>
-    /**
-    *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-    */
     var disqus_config = function () {
-      // 명확한 페이지 식별을 위해 현재 경로 사용
       this.page.url = window.location.href;  
       this.page.identifier = window.location.pathname; 
     };
@@ -128,16 +125,22 @@
       s.src = 'https://test-50tbhkdivl.disqus.com/embed.js';
       s.setAttribute('data-timestamp', +new Date());
       
-      // 스크립트 로드 성공/실패 모니터링
       s.onload = function() { console.log("Disqus loaded successfully."); };
       s.onerror = function() { 
-        console.error("Disqus failed to load. Check if the domain is whitelisted in Disqus admin."); 
+        console.error("Disqus failed to load. Check domain whitelist."); 
         const thread = document.getElementById('disqus_thread');
         if (thread) {
-          thread.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--text-muted);">댓글 시스템을 불러오는 중 오류가 발생했습니다. (도메인 허용 설정 확인 필요)</p>';
+          thread.innerHTML = `
+            <div style="text-align:center; padding: 40px; border: 2px dashed var(--border-color); border-radius: 16px;">
+              <p style="margin-bottom: 10px; font-weight: 600;">⚠️ 댓글 시스템 로드 실패</p>
+              <p style="font-size: 0.875rem; color: var(--text-muted);">
+                도메인 허용 설정이 필요합니다.<br>
+                현재 도메인을 Disqus 관리자 페이지에 추가해주세요.
+              </p>
+            </div>
+          `;
         }
       };
-
       (d.head || d.body).appendChild(s);
     })();
   </script>
