@@ -112,14 +112,18 @@
     </div>
   </dialog>
 
-  <!-- Disqus Script -->
+  <!-- Disqus Script Integration -->
   <script>
-      (function() {
+    var disqus_config = function () {
+      this.page.url = window.location.origin; // Dynamically set to current origin
+      this.page.identifier = 'youtube-ai-analyzer-home'; // Unique identifier for this page
+    };
+    (function() {
       var d = document, s = d.createElement('script');
       s.src = 'https://test-50tbhkdivl.disqus.com/embed.js';
       s.setAttribute('data-timestamp', +new Date());
       (d.head || d.body).appendChild(s);
-      })();
+    })();
   </script>
   <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 
