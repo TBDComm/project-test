@@ -9,6 +9,7 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
+<a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -29,12 +30,12 @@
   </div>
 </nav>
 
-<main class="app-main">
+<main class="app-main" id="main-content">
 
   <!-- 인증 로딩 중 -->
   <div id="auth-loading" class="loading-overlay">
     <div class="spinner"></div>
-    <span>잠시만 기다려주세요...</span>
+    <span>잠시만 기다려주세요…</span>
   </div>
 
   <!-- 대시보드 콘텐츠 -->
@@ -73,8 +74,8 @@
 
     <!-- 빠른 실행 -->
     <div class="quick-actions">
-      <div class="action-card" id="spotlight-action" onclick="location.href='/spotlight.html'">
-        <div class="action-icon">✦</div>
+      <a href="/spotlight.html" class="action-card" id="spotlight-action">
+        <div class="action-icon" aria-hidden="true">✦</div>
         <div>
           <div class="action-name">Spotlight Compare</div>
           <div class="action-desc">내 영상 제목과 카테고리를 입력하면, 지금 스포트된 상위 영상들의 패턴과 나란히 비교해드립니다.</div>
@@ -83,10 +84,10 @@
           <span class="action-cta">비교 시작하기 →</span>
           <span id="spotlight-remain" class="badge badge-purple"></span>
         </div>
-      </div>
+      </a>
 
-      <div class="action-card" id="timing-action">
-        <div class="action-icon">⏱</div>
+      <a href="/timing.html" class="action-card" id="timing-action">
+        <div class="action-icon" aria-hidden="true">⏱</div>
         <div>
           <div class="action-name">Timing Report</div>
           <div class="action-desc">영상 주제를 입력하면, 지금 그 주제의 시장 현황—포화도, 최근 업로드 빈도, 주목받은 타이밍—을 보여드립니다.</div>
@@ -95,7 +96,7 @@
           <span id="timing-cta" class="action-cta">리포트 보기 →</span>
           <span id="timing-lock" class="lock-badge hidden">🔒 STARTER 이상</span>
         </div>
-      </div>
+      </a>
     </div>
 
   </div>

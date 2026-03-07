@@ -9,6 +9,7 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
+<a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -29,7 +30,7 @@
   </div>
 </nav>
 
-<main class="app-main">
+<main class="app-main" id="main-content">
 
   <div id="auth-loading" class="loading-overlay">
     <div class="spinner"></div>
@@ -211,6 +212,8 @@ document.querySelectorAll('.mypage-nav-item').forEach(btn => {
   });
 });
 
+const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
 function renderProfile(user, userData) {
   const name = user.displayName || user.email?.split('@')[0] || '크리에이터';
   document.getElementById('profile-avatar').textContent = name[0].toUpperCase();
@@ -220,8 +223,7 @@ function renderProfile(user, userData) {
 
   if (userData.createdAt) {
     const d = userData.createdAt.toDate?.() || new Date(userData.createdAt);
-    document.getElementById('profile-joined').textContent =
-      `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+    document.getElementById('profile-joined').textContent = dateFormatter.format(d);
   }
 }
 
@@ -235,7 +237,7 @@ function renderSubscription(userData) {
     document.getElementById('sub-paid-section').classList.add('hidden');
   } else {
     const end = userData.subscriptionEnd?.toDate?.() || new Date(userData.subscriptionEnd || Date.now());
-    const endStr = `${end.getFullYear()}년 ${end.getMonth()+1}월 ${end.getDate()}일`;
+    const endStr = dateFormatter.format(end);
     document.getElementById('sub-plan-note').textContent = `${endStr}까지 구독 중`;
 
     document.getElementById('sub-free-section').classList.add('hidden');

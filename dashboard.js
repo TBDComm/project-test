@@ -39,8 +39,8 @@ requireAuth((user, userData) => {
     document.getElementById('sub-status').textContent = '구독 중';
     if (userData.subscriptionEnd) {
       const end = userData.subscriptionEnd.toDate?.() || new Date(userData.subscriptionEnd);
-      document.getElementById('sub-note').textContent =
-        `${end.getFullYear()}년 ${end.getMonth() + 1}월 ${end.getDate()}일까지`;
+      const fmt = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('sub-note').textContent = `${fmt.format(end)}까지`;
     }
   }
 
@@ -61,14 +61,14 @@ requireAuth((user, userData) => {
   const timingCta  = document.getElementById('timing-cta');
 
   if (canTiming) {
-    timingAction.onclick = () => location.href = '/timing.html';
+    timingAction.href = '/timing.html';
     timingLock.classList.add('hidden');
   } else {
     timingAction.classList.add('locked');
+    timingAction.href = '/pricing.html';
     timingLock.classList.remove('hidden');
     timingCta.textContent = '업그레이드 필요';
     timingCta.style.color = 'var(--text-3)';
-    timingAction.onclick = () => location.href = '/pricing.html';
   }
 });
 

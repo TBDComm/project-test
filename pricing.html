@@ -9,6 +9,7 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body>
+<a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -33,7 +34,7 @@
   </div>
 </nav>
 
-<main>
+<main id="main-content">
   <section class="section">
     <div class="container">
       <div class="section-header">
@@ -157,10 +158,10 @@
         <h2 class="faq-title">자주 묻는 질문</h2>
 
         <div class="faq-item">
-          <div class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
             해지하면 어떻게 되나요?
             <span>+</span>
-          </div>
+          </button>
           <div class="faq-answer" style="display:none;">
             언제든 해지할 수 있습니다. 해지해도 결제한 달 말까지는 모든 기능이 유지됩니다.
             다음 달부터 무료 플랜으로 전환됩니다.
@@ -168,20 +169,20 @@
         </div>
 
         <div class="faq-item">
-          <div class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
             무료 플랜 5회는 어떻게 계산되나요?
             <span>+</span>
-          </div>
+          </button>
           <div class="faq-answer" style="display:none;">
             Spotlight Compare를 분석할 때마다 1회가 차감됩니다. 매월 1일에 5회로 초기화됩니다.
           </div>
         </div>
 
         <div class="faq-item">
-          <div class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
             어떤 결제 수단을 지원하나요?
             <span>+</span>
-          </div>
+          </button>
           <div class="faq-answer" style="display:none;">
             신용카드, 체크카드, 간편결제(카카오페이, 토스페이 등)를 지원합니다.
             토스페이먼츠를 통해 안전하게 결제됩니다.
@@ -189,10 +190,10 @@
         </div>
 
         <div class="faq-item">
-          <div class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
             데이터는 얼마나 최신 정보인가요?
             <span>+</span>
-          </div>
+          </button>
           <div class="faq-answer" style="display:none;">
             YouTube Data API v3를 사용해 실시간으로 데이터를 가져옵니다.
             Spotlight Compare는 최근 7일 내 인기 영상, Timing Report는 최근 30일 기준입니다.
@@ -200,10 +201,10 @@
         </div>
 
         <div class="faq-item">
-          <div class="faq-question" onclick="toggleFaq(this)">
+          <button class="faq-question" onclick="toggleFaq(this)" aria-expanded="false">
             환불이 가능한가요?
             <span>+</span>
-          </div>
+          </button>
           <div class="faq-answer" style="display:none;">
             결제일로부터 7일 이내, 서비스를 5회 이하 사용한 경우 전액 환불이 가능합니다.
             환불 문의는 support@momento.kr로 연락해주세요.
@@ -260,6 +261,7 @@ window.toggleFaq = function(el) {
   const isOpen = answer.style.display !== 'none';
   answer.style.display = isOpen ? 'none' : 'block';
   icon.textContent = isOpen ? '+' : '−';
+  el.setAttribute('aria-expanded', String(!isOpen));
 };
 </script>
 </body>

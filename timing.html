@@ -9,6 +9,7 @@
   <link href="style.css" rel="stylesheet">
 </head>
 <body class="app-layout">
+<a href="#main-content" class="skip-link">본문으로 건너뛰기</a>
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -29,11 +30,11 @@
   </div>
 </nav>
 
-<main class="app-main">
+<main class="app-main" id="main-content">
 
   <div id="auth-loading" class="loading-overlay">
     <div class="spinner"></div>
-    <span>잠시만 기다려주세요...</span>
+    <span>잠시만 기다려주세요…</span>
   </div>
 
   <!-- 플랜 잠금 -->
@@ -66,8 +67,8 @@
         <div class="input-form">
           <div class="form-group">
             <label class="form-label" for="topic-input">영상 주제 또는 키워드</label>
-            <input type="text" id="topic-input" class="form-input"
-              placeholder="예: 다이어트, 재테크, 혼자 여행" maxlength="60" />
+            <input type="text" id="topic-input" name="topic" class="form-input"
+              placeholder="예: 다이어트, 재테크, 혼자 여행" maxlength="60" autocomplete="off" />
             <span class="form-hint">주제를 한 단어 또는 짧은 문장으로 입력하세요.</span>
           </div>
 
@@ -88,7 +89,7 @@
 
         <div id="result-loading" class="result-loading hidden">
           <div class="spinner"></div>
-          <span>주제 관련 영상 데이터를 분석하는 중...</span>
+          <span>주제 관련 영상 데이터를 분석하는 중…</span>
         </div>
 
         <div id="result-error" class="hidden">
