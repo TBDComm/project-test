@@ -32,7 +32,9 @@ requireAuth((user, userData) => {
 
   // 사용량 안내
   const notice = document.getElementById('usage-notice');
-  if (userData.plan === 'free') {
+  if (userData.isAdmin) {
+    notice.textContent = '어드민 계정 · 모든 기능 무제한';
+  } else if (userData.plan === 'free') {
     notice.textContent = `이번 달 ${remaining}회 남았습니다. (무료 플랜: 월 5회)`;
   } else {
     notice.textContent = `${userData.plan === 'starter' ? 'STARTER' : 'PRO'} 플랜 · 무제한 사용 가능`;
@@ -63,12 +65,11 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
     const videos = await fetchTrendingVideos(category);
     const analysis = analyzeVideos(videos);
 
-    // 사용량 차감 (API 호출 성공 후)
-    await incrementUsage(currentUser.uid);
-    currentUserData.monthlyUsage = (currentUserData.monthlyUsage || 0) + 1;
+    // 사용량 차감 (어드민/유료 플랜은 차감 안 함)
+    if (!currentUserData.isAdmin && currentUserData.plan === 'free') {
+      await incrementUsage(currentUser.id);
+      currentUserData.monthlyUsage = (currentUserData.monthlyUsage || 0) + 1;
 
-    // 남은 횟수 갱신
-    if (currentUserData.plan === 'free') {
       const newRemaining = getRemainingUses(currentUserData);
       document.getElementById('usage-notice').textContent =
         `이번 달 ${newRemaining}회 남았습니다. (무료 플랜: 월 5회)`;

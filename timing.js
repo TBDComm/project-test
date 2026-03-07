@@ -173,9 +173,10 @@ function renderResult(topic, { videos, totalResults }) {
   }
 }
 
+const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
 function formatDate(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  return dateFormatter.format(new Date(iso));
 }
 
 function escapeHtml(str) {
