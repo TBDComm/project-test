@@ -1,11 +1,10 @@
 // main.js — 랜딩 페이지 스크립트
 // 이미 로그인된 사용자는 대시보드로 리다이렉트
 
-import { auth } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { supabase } from './supabase-config.js';
 
-onAuthStateChanged(auth, (user) => {
-  if (user) {
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
     // 로그인 상태면 네비게이션 버튼 업데이트
     const loginBtn   = document.querySelector('a[href="/auth.html"]');
     const signupBtn  = document.querySelector('a[href="/auth.html?mode=signup"]');

@@ -1,7 +1,7 @@
 // spotlight.js — Spotlight Compare 분석 로직
 import { requireAuth, canUseFeature, getRemainingUses, incrementUsage, logout,
          detectTitleStructure, detectEmotionTrigger, getDateBefore } from './utils.js';
-import { YOUTUBE_API_KEY } from './firebase-config.js';
+import { YOUTUBE_API_KEY } from './supabase-config.js';
 
 const CATEGORY_LABELS = {
   '22': '브이로그', '20': '게임', '27': '교육',

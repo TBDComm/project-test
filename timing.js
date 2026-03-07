@@ -1,6 +1,6 @@
 // timing.js — Timing Report 분석 로직
 import { requireAuth, canUseFeature, logout, getDateBefore, formatNumber } from './utils.js';
-import { YOUTUBE_API_KEY } from './firebase-config.js';
+import { YOUTUBE_API_KEY } from './supabase-config.js';
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 

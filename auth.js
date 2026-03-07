@@ -1,11 +1,5 @@
-// auth.js — Firebase 인증 (이메일 + Google)
-import { auth, googleProvider } from './firebase-config.js';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  onAuthStateChanged,
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+// auth.js — Supabase 인증 (이메일 + Google)
+import { supabase } from './supabase-config.js';
 
 // URL 파라미터 파싱
 const params = new URLSearchParams(window.location.search);
@@ -13,8 +7,8 @@ const mode = params.get('mode');       // 'signup' or null
 const redirect = params.get('redirect') || '/dashboard.html';
 
 // 이미 로그인된 경우 리다이렉트
-onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = redirect;
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) window.location.href = redirect;
 });
 
 // 패널 전환
@@ -41,20 +35,25 @@ function hideError(id) {
   document.getElementById(id).classList.add('hidden');
 }
 
-// Firebase 에러 코드 → 한국어 메시지
-function authErrorMsg(code) {
-  const map = {
-    'auth/user-not-found':       '존재하지 않는 이메일입니다.',
-    'auth/wrong-password':       '비밀번호가 올바르지 않습니다.',
-    'auth/invalid-credential':   '이메일 또는 비밀번호가 올바르지 않습니다.',
-    'auth/email-already-in-use': '이미 사용 중인 이메일입니다.',
-    'auth/weak-password':        '비밀번호는 6자 이상이어야 합니다.',
-    'auth/invalid-email':        '올바른 이메일 형식이 아닙니다.',
-    'auth/too-many-requests':    '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
-    'auth/popup-closed-by-user': '팝업이 닫혔습니다. 다시 시도해주세요.',
-    'auth/network-request-failed': '네트워크 오류가 발생했습니다.',
-  };
-  return map[code] || '오류가 발생했습니다. 다시 시도해주세요.';
+// Supabase 에러 메시지 → 한국어
+function authErrorMsg(message) {
+  if (!message) return '오류가 발생했습니다. 다시 시도해주세요.';
+  const m = message.toLowerCase();
+  if (m.includes('invalid login credentials') || m.includes('invalid email or password'))
+    return '이메일 또는 비밀번호가 올바르지 않습니다.';
+  if (m.includes('user already registered') || m.includes('already been registered'))
+    return '이미 사용 중인 이메일입니다.';
+  if (m.includes('password should be at least'))
+    return '비밀번호는 6자 이상이어야 합니다.';
+  if (m.includes('unable to validate email'))
+    return '올바른 이메일 형식이 아닙니다.';
+  if (m.includes('email not confirmed'))
+    return '이메일 인증이 필요합니다. 받은 메일함을 확인해주세요.';
+  if (m.includes('too many requests'))
+    return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+  if (m.includes('network'))
+    return '네트워크 오류가 발생했습니다.';
+  return '오류가 발생했습니다. 다시 시도해주세요.';
 }
 
 // 이메일 로그인
@@ -72,13 +71,14 @@ document.getElementById('email-login-btn').addEventListener('click', async () =>
   btn.textContent = '로그인 중...';
   btn.disabled = true;
 
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    window.location.href = redirect;
-  } catch (e) {
-    showError('login-error', authErrorMsg(e.code));
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showError('login-error', authErrorMsg(error.message));
     btn.textContent = '로그인';
     btn.disabled = false;
+  } else {
+    window.location.href = redirect;
   }
 });
 
@@ -101,25 +101,27 @@ document.getElementById('email-signup-btn').addEventListener('click', async () =
   btn.textContent = '가입 중...';
   btn.disabled = true;
 
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-    window.location.href = redirect;
-  } catch (e) {
-    showError('signup-error', authErrorMsg(e.code));
+  const { error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    showError('signup-error', authErrorMsg(error.message));
     btn.textContent = '무료로 시작하기';
     btn.disabled = false;
+  } else {
+    window.location.href = redirect;
   }
 });
 
-// Google 로그인/가입 (공통)
+// Google 로그인/가입 (공통) — OAuth 리다이렉트 방식
 async function googleAuth(errorId) {
-  try {
-    await signInWithPopup(auth, googleProvider);
-    window.location.href = redirect;
-  } catch (e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      showError(errorId, authErrorMsg(e.code));
-    }
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + redirect,
+    },
+  });
+  if (error) {
+    showError(errorId, authErrorMsg(error.message));
   }
 }
 

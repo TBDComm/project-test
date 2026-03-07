@@ -1,8 +1,6 @@
 // utils.js — 공통 유틸리티: 인증 가드, 사용자 데이터, 사용량 추적
 
-import { auth, db } from './firebase-config.js';
-import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { supabase } from './supabase-config.js';
 
 export const PLANS = {
   free:    { name: '무료',    monthlyLimit: 5,        price: 0 },
@@ -12,48 +10,68 @@ export const PLANS = {
 
 // 로그인 필요 페이지에서 호출 — 미로그인 시 auth.html로 리다이렉트
 export function requireAuth(callback) {
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) {
       window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname);
       return;
     }
-    const userData = await getUserData(user.uid);
-    callback(user, userData);
+    const userData = await getUserData(session.user.id);
+    callback(session.user, userData);
   });
 }
 
-// Firestore에서 사용자 데이터 가져오기 (없으면 생성)
+// Supabase DB에서 사용자 데이터 가져오기 (없으면 생성)
 export async function getUserData(uid) {
-  const ref = doc(db, 'users', uid);
-  const snap = await getDoc(ref);
   const currentMonth = getCurrentMonth();
 
-  if (!snap.exists()) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', uid)
+    .single();
+
+  if (error || !data) {
     const newUser = {
+      id: uid,
       plan: 'free',
-      monthlyUsage: 0,
-      usageMonth: currentMonth,
-      subscriptionEnd: null,
-      createdAt: new Date(),
+      monthly_usage: 0,
+      usage_month: currentMonth,
+      subscription_end: null,
     };
-    await setDoc(ref, newUser);
-    return newUser;
+    await supabase.from('users').insert(newUser);
+    return { plan: 'free', monthlyUsage: 0, usageMonth: currentMonth, subscriptionEnd: null };
   }
 
-  const data = snap.data();
   // 월이 바뀌면 사용량 초기화
-  if (data.usageMonth !== currentMonth) {
-    await updateDoc(ref, { monthlyUsage: 0, usageMonth: currentMonth });
-    data.monthlyUsage = 0;
-    data.usageMonth = currentMonth;
+  if (data.usage_month !== currentMonth) {
+    await supabase
+      .from('users')
+      .update({ monthly_usage: 0, usage_month: currentMonth })
+      .eq('id', uid);
+    data.monthly_usage = 0;
+    data.usage_month = currentMonth;
   }
-  return data;
+
+  return {
+    plan: data.plan,
+    monthlyUsage: data.monthly_usage,
+    usageMonth: data.usage_month,
+    subscriptionEnd: data.subscription_end,
+  };
 }
 
 // Spotlight Compare 사용 1회 차감
 export async function incrementUsage(uid) {
-  const ref = doc(db, 'users', uid);
-  await updateDoc(ref, { monthlyUsage: increment(1) });
+  const { data } = await supabase
+    .from('users')
+    .select('monthly_usage')
+    .eq('id', uid)
+    .single();
+
+  await supabase
+    .from('users')
+    .update({ monthly_usage: (data?.monthly_usage || 0) + 1 })
+    .eq('id', uid);
 }
 
 // 기능 사용 가능 여부 확인
@@ -92,7 +110,7 @@ export function formatNumber(n) {
 
 // 로그아웃 (모든 페이지 공통)
 export async function logout() {
-  await signOut(auth);
+  await supabase.auth.signOut();
   window.location.href = '/index.html';
 }
 
