@@ -113,34 +113,15 @@
     </div>
   </dialog>
 
-  <!-- Optimized Disqus Script Integration -->
   <script>
     var disqus_config = function () {
-      this.page.url = window.location.href;  
-      this.page.identifier = window.location.pathname; 
+      this.page.url = window.location.href;
+      this.page.identifier = window.location.pathname;
     };
-
-    (function() { 
+    (function() {
       var d = document, s = d.createElement('script');
-      s.src = 'https://test-50tbhkdivl.disqus.com/embed.js';
+      s.src = 'https://test2-ydalbjgxyi.disqus.com/embed.js';
       s.setAttribute('data-timestamp', +new Date());
-      
-      s.onload = function() { console.log("Disqus loaded successfully."); };
-      s.onerror = function() { 
-        console.error("Disqus failed to load. Check domain whitelist."); 
-        const thread = document.getElementById('disqus_thread');
-        if (thread) {
-          thread.innerHTML = `
-            <div style="text-align:center; padding: 40px; border: 2px dashed var(--border-color); border-radius: 16px;">
-              <p style="margin-bottom: 10px; font-weight: 600;">⚠️ 댓글 시스템 로드 실패</p>
-              <p style="font-size: 0.875rem; color: var(--text-muted);">
-                도메인 허용 설정이 필요합니다.<br>
-                현재 도메인을 Disqus 관리자 페이지에 추가해주세요.
-              </p>
-            </div>
-          `;
-        }
-      };
       (d.head || d.body).appendChild(s);
     })();
   </script>
