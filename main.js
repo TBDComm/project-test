@@ -207,7 +207,48 @@ class CourseRegistrationApp {
   }
 }
 
+class PartnershipModal {
+  constructor() {
+    this.modal = document.getElementById('partnership-modal');
+    this.openBtn = document.getElementById('partnership-btn');
+    this.closeBtn = document.getElementById('close-modal-btn');
+    this.form = document.getElementById('partnership-form');
+
+    this.init();
+  }
+
+  init() {
+    if (!this.modal || !this.openBtn || !this.closeBtn) return;
+
+    this.openBtn.addEventListener('click', () => {
+      this.modal.showModal();
+    });
+
+    this.closeBtn.addEventListener('click', () => {
+      this.modal.close();
+    });
+
+    // Close on backdrop click
+    this.modal.addEventListener('click', (e) => {
+      const dialogDimensions = this.modal.getBoundingClientRect();
+      if (
+        e.clientX < dialogDimensions.left ||
+        e.clientX > dialogDimensions.right ||
+        e.clientY < dialogDimensions.top ||
+        e.clientY > dialogDimensions.bottom
+      ) {
+        this.modal.close();
+      }
+    });
+
+    // Form submission feedback (optional, as Formspree redirects by default)
+    // If you want to handle it via AJAX, you can preventDefault and use fetch.
+    // For "simple form", standard POST is fine.
+  }
+}
+
 // Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   new CourseRegistrationApp();
+  new PartnershipModal();
 });

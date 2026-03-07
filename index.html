@@ -15,11 +15,50 @@
         <h1>Korea University Port</h1>
       </div>
       <div class="user-info">
+        <button id="partnership-btn" class="secondary-btn">🤝 제휴 문의</button>
         <span class="user-name">김민수 (20240001)</span>
         <span class="credits-info">신청학점: <strong id="total-credits">0</strong> / 21</span>
       </div>
     </div>
   </header>
+
+  <!-- Partnership Inquiry Modal -->
+  <dialog id="partnership-modal" class="premium-modal">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h2>🤝 제휴 문의하기</h2>
+        <button id="close-modal-btn" class="close-btn">&times;</button>
+      </header>
+      <form action="https://formspree.io/f/xlgpezwr" method="POST" id="partnership-form">
+        <div class="form-group">
+          <label for="name">성함</label>
+          <input type="text" id="name" name="name" required placeholder="홍길동">
+        </div>
+        <div class="form-group">
+          <label for="email">이메일 주소</label>
+          <input type="email" id="email" name="_replyto" required placeholder="example@domain.com">
+        </div>
+        <div class="form-group">
+          <label for="company">업체명/소속</label>
+          <input type="text" id="company" name="company" required placeholder="OO대학교 / OO기업">
+        </div>
+        <div class="form-group">
+          <label for="inquiry-type">문의 유형</label>
+          <select id="inquiry-type" name="inquiry_type">
+            <option value="partnership">비즈니스 제휴</option>
+            <option value="marketing">마케팅/홍보</option>
+            <option value="technical">기술 지원/연동</option>
+            <option value="other">기타 문의</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">문의 내용</label>
+          <textarea id="message" name="message" required placeholder="문의하실 내용을 상세히 적어주세요."></textarea>
+        </div>
+        <button type="submit" class="submit-btn">보내기</button>
+      </form>
+    </div>
+  </dialog>
 
   <main class="main-content">
     <div class="left-panel">
