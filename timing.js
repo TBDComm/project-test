@@ -37,10 +37,31 @@ document.getElementById('topic-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('timing-btn').click();
 });
 
+// YouTube API 캐시 (localStorage, TTL 3시간)
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
+
+function getCached(key) {
+  try {
+    const raw = localStorage.getItem('yt_cache_' + key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL_MS) { localStorage.removeItem('yt_cache_' + key); return null; }
+    return data;
+  } catch { return null; }
+}
+
+function setCache(key, data) {
+  try { localStorage.setItem('yt_cache_' + key, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
+
 async function fetchTopicData(topic) {
   if (YOUTUBE_API_KEY === 'YOUR_YOUTUBE_API_KEY') {
     return getDemoData(topic);
   }
+
+  const cacheKey = `timing_${topic}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
 
   const after30 = getDateBefore(30);
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&regionCode=KR&type=video&q=${encodeURIComponent(topic)}&order=viewCount&maxResults=20&publishedAfter=${after30}&key=${YOUTUBE_API_KEY}`;
@@ -60,10 +81,13 @@ async function fetchTopicData(topic) {
   // 전체 업로드 수 추정 (search.list totalResults)
   const totalResults = data.pageInfo?.totalResults || 0;
 
-  return {
+  const result = {
     videos: detailData.items || [],
     totalResults,
   };
+
+  setCache(cacheKey, result);
+  return result;
 }
 
 function analyzeData(videos, totalResults) {

@@ -81,6 +81,23 @@ document.getElementById('analyze-btn').addEventListener('click', async () => {
   }
 });
 
+// YouTube API 캐시 (localStorage, TTL 3시간)
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
+
+function getCached(key) {
+  try {
+    const raw = localStorage.getItem('yt_cache_' + key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL_MS) { localStorage.removeItem('yt_cache_' + key); return null; }
+    return data;
+  } catch { return null; }
+}
+
+function setCache(key, data) {
+  try { localStorage.setItem('yt_cache_' + key, JSON.stringify({ ts: Date.now(), data })); } catch {}
+}
+
 // YouTube API로 트렌딩 영상 가져오기
 async function fetchTrendingVideos(categoryId) {
   // API 키 미설정 시 데모 데이터 반환
@@ -88,7 +105,10 @@ async function fetchTrendingVideos(categoryId) {
     return getDemoVideos(categoryId);
   }
 
-  const publishedAfter = getDateBefore(7);
+  const cacheKey = `spotlight_${categoryId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=KR&videoCategoryId=${categoryId}&maxResults=20&key=${YOUTUBE_API_KEY}`;
 
   const res = await fetch(url);
@@ -100,13 +120,19 @@ async function fetchTrendingVideos(categoryId) {
 
   if (!data.items?.length) {
     // 해당 카테고리에 데이터가 부족하면 카테고리 없이 재시도
+    const fallbackKey = 'spotlight_all';
+    const cachedFallback = getCached(fallbackKey);
+    if (cachedFallback) return cachedFallback;
+
     const url2 = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=KR&maxResults=20&key=${YOUTUBE_API_KEY}`;
     const res2 = await fetch(url2);
     const data2 = await res2.json();
     if (!data2.items?.length) throw new Error('데이터를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.');
+    setCache(fallbackKey, data2.items);
     return data2.items;
   }
 
+  setCache(cacheKey, data.items);
   return data.items;
 }
 

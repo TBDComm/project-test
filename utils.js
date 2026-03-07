@@ -63,16 +63,20 @@ export async function getUserData(uid) {
 
 // Spotlight Compare 사용 1회 차감
 export async function incrementUsage(uid) {
-  const { data } = await supabase
+  const { data, error: selectError } = await supabase
     .from('users')
     .select('monthly_usage')
     .eq('id', uid)
     .single();
 
-  await supabase
+  if (selectError) throw new Error('사용량 조회 실패: ' + selectError.message);
+
+  const { error: updateError } = await supabase
     .from('users')
     .update({ monthly_usage: (data?.monthly_usage || 0) + 1 })
     .eq('id', uid);
+
+  if (updateError) throw new Error('사용량 업데이트 실패: ' + updateError.message);
 }
 
 // 기능 사용 가능 여부 확인
