@@ -3,130 +3,275 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube AI Video Analyzer</title>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link href='/style.css' rel='stylesheet'>
+  <title>MOMENTO — 지금 잘 되는 영상들과 내 영상을 비교해보세요</title>
+  <meta name="description" content="유튜브 크리에이터 전용 비교 분석 서비스. 지금 카테고리에서 스포트받는 영상들과 내 영상의 패턴을 나란히 비교합니다." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
 </head>
-<body class="light-theme">
-  <header class="app-header">
-    <div class="header-container">
-      <div class="logo">
-        <span class="icon">🎬</span>
-        <h1>AI Video Analyzer</h1>
+<body>
+
+<!-- 네비게이션 -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/index.html" class="nav-logo">
+      <span class="logo-icon">M</span>
+      MOMENTO
+    </a>
+    <div class="nav-links">
+      <a href="/pricing.html" class="nav-link">요금제</a>
+      <a href="#features" class="nav-link">기능</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/auth.html" class="btn btn-secondary btn-sm">로그인</a>
+      <a href="/auth.html?mode=signup" class="btn btn-primary btn-sm">무료로 시작하기</a>
+    </div>
+  </div>
+</nav>
+
+<!-- 히어로 -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">
+      <span>✦</span>
+      한국 유튜브 크리에이터 전용
+    </div>
+    <h1 class="hero-title">
+      지금 이 카테고리에서<br>
+      <span class="text-gradient">뜨는 영상들</span>은<br>
+      이런 패턴입니다
+    </h1>
+    <p class="hero-sub">
+      조회수가 좋은 건지 나쁜 건지 모르겠다면, 기준이 없는 겁니다.<br>
+      MOMENTO는 지금 스포트된 상위 영상들과 내 영상을 나란히 보여줍니다.
+    </p>
+    <div class="hero-actions">
+      <a href="/auth.html?mode=signup" class="btn btn-primary btn-lg">무료로 시작하기 →</a>
+      <a href="#preview" class="btn btn-secondary btn-lg">미리보기</a>
+    </div>
+    <p class="hero-note">신용카드 불필요 · 월 5회 무료</p>
+  </div>
+</section>
+
+<!-- 비교 리포트 미리보기 -->
+<section class="preview-wrapper" id="preview">
+  <div class="container">
+    <p class="preview-label">Spotlight Compare 리포트 예시</p>
+    <div class="compare-preview">
+      <div class="compare-preview-header">
+        <div class="compare-col-header spotlight">✦ 지금 이 카테고리 스포트 패턴 (상위 20개)</div>
+        <div class="compare-col-header mine">내 영상</div>
       </div>
-      <div class="nav-actions">
-        <button id="theme-toggle" class="icon-btn" aria-label="테마 전환">☀️</button>
-        <button id="partnership-btn" class="secondary-btn">🤝 제휴 문의</button>
+      <div class="compare-row">
+        <div class="compare-cell spotlight-cell">
+          <div class="cell-label">제목 길이</div>
+          <div class="cell-value">평균 18~22자</div>
+          <div class="cell-sub">상위 70%가 이 범위 안에 있음</div>
+        </div>
+        <div class="compare-cell mine-cell">
+          <div class="cell-label">제목 길이</div>
+          <div class="cell-value">31자</div>
+          <div class="cell-sub">평균 대비 +9~13자 초과</div>
+        </div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell spotlight-cell">
+          <div class="cell-label">제목 구조 유형</div>
+          <div class="cell-value">숫자+상황 조합 68%</div>
+          <div class="cell-sub">질문형 20% · 감탄형 12%</div>
+        </div>
+        <div class="compare-cell mine-cell">
+          <div class="cell-label">제목 구조 유형</div>
+          <div class="cell-value">정보형</div>
+          <div class="cell-sub">숫자형은 아님</div>
+        </div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell spotlight-cell">
+          <div class="cell-label">감정 트리거</div>
+          <div class="cell-value">호기심형 52%</div>
+          <div class="cell-sub">공감형 28% · 중립형 20%</div>
+        </div>
+        <div class="compare-cell mine-cell">
+          <div class="cell-label">감정 트리거</div>
+          <div class="cell-value">중립형</div>
+          <div class="cell-sub">호기심 유발 요소 없음</div>
+        </div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell spotlight-cell">
+          <div class="cell-label">업로드 집중 시간대</div>
+          <div class="cell-value">화·목 오후 7~9시</div>
+          <div class="cell-sub">주말 집중도는 낮음</div>
+        </div>
+        <div class="compare-cell mine-cell">
+          <div class="cell-label">업로드 시간</div>
+          <div class="cell-value">일요일 오전 11시</div>
+          <div class="cell-sub">스포트 집중 시간대 외</div>
+        </div>
       </div>
     </div>
-  </header>
+  </div>
+</section>
 
-  <main class="main-container">
-    <!-- Hero / Input Section -->
-    <section class="hero-section">
-      <div class="hero-content">
-        <h2>영상을 분석하고 통찰을 얻으세요</h2>
-        <p>YouTube 링크를 입력하면 AI가 내용을 요약하고 감성 및 참여도를 분석합니다.</p>
-        <div class="search-box">
-          <input type="text" id="youtube-url" placeholder="YouTube 영상 URL을 입력하세요 (예: https://www.youtube.com/watch?v=...)">
-          <button id="analyze-btn">분석 시작</button>
+<!-- 문제 제기 -->
+<section class="problem-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">왜 MOMENTO인가</span>
+      <h2 class="section-title">수치는 보이지만<br>기준이 없습니다</h2>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card fade-in-up">
+        <div class="problem-icon">📊</div>
+        <h3 class="problem-title">클릭률 4.2%가 좋은 건가요?</h3>
+        <p class="problem-desc">
+          유튜브 스튜디오가 수치를 보여주지만, 그게 잘 되고 있는 건지 아닌지는 알 수 없습니다.
+          비교할 기준 자체가 없기 때문입니다.
+        </p>
+      </div>
+      <div class="problem-card fade-in-up">
+        <div class="problem-icon">🔍</div>
+        <h3 class="problem-title">지금 뭐가 먹히는지 모른다</h3>
+        <p class="problem-desc">
+          같은 카테고리에서 요즘 어떤 제목 구조가 통하는지, 어떤 업로드 타이밍이 주목받는지
+          직접 조사하는 건 너무 번거롭습니다.
+        </p>
+      </div>
+      <div class="problem-card fade-in-up">
+        <div class="problem-icon">🎯</div>
+        <h3 class="problem-title">"이렇게 바꿔라"는 많지만</h3>
+        <p class="problem-desc">
+          AI 피드백, 유튜브 강의, 컨설턴트— 모두 지시를 합니다.
+          MOMENTO는 지시하지 않습니다. 데이터를 나란히 보여줄 뿐입니다.
+          판단은 당신이 합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 기능 소개 -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">핵심 기능</span>
+      <h2 class="section-title">두 가지 도구로<br>현재 시장을 읽습니다</h2>
+      <p class="section-desc">
+        기상예보관이 비가 올 확률을 알려주듯, 패턴을 보여줄 뿐입니다.
+      </p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-in-up">
+        <div class="feature-icon">✦</div>
+        <h3 class="feature-name">Spotlight Compare</h3>
+        <p class="feature-desc">
+          내 영상 제목과 카테고리를 입력하면, 지금 그 카테고리 상위 20개 영상의 패턴과 내 영상을 나란히 비교합니다.
+          따라서 이렇게 바꾸라는 말은 없습니다. 두 컬럼을 보는 것이 전부입니다.
+        </p>
+        <div class="feature-tag-list">
+          <span class="feature-tag">제목 길이 비교</span>
+          <span class="feature-tag">구조 유형 분포</span>
+          <span class="feature-tag">감정 트리거 분석</span>
+          <span class="feature-tag">업로드 시간대</span>
+          <span class="feature-tag">썸네일 텍스트 길이</span>
         </div>
       </div>
-    </section>
-
-    <!-- Analysis Dashboard -->
-    <section id="analysis-dashboard" class="dashboard-grid hidden">
-      <div class="video-preview-card card">
-        <div class="card-header">영상 미리보기</div>
-        <div id="video-embed" class="embed-container"></div>
-        <h3 id="video-title">분석을 위해 링크를 입력해주세요</h3>
-      </div>
-
-      <div class="metrics-card card">
-        <div class="card-header">주요 통계</div>
-        <div class="metrics-grid">
-          <div class="metric-item">
-            <span class="label">감성 점수</span>
-            <span class="value" id="sentiment-score">--</span>
-          </div>
-          <div class="metric-item">
-            <span class="label">참여 지수</span>
-            <span class="value" id="engagement-index">--</span>
-          </div>
+      <div class="feature-card fade-in-up">
+        <div class="feature-icon">⏱</div>
+        <h3 class="feature-name">Timing Report</h3>
+        <p class="feature-desc">
+          만들고 싶은 영상 주제를 입력하면, 지금 그 주제의 시장 상황을 보여줍니다.
+          얼마나 많은 영상이 올라오고 있는지, 주목받은 영상들은 언제 올라왔는지,
+          포화도는 낮음/보통/높음 중 어느 수준인지.
+        </p>
+        <div class="feature-tag-list">
+          <span class="feature-tag">주제 포화도</span>
+          <span class="feature-tag">최근 업로드 빈도</span>
+          <span class="feature-tag">주목받은 영상 타이밍</span>
+          <span class="feature-tag">시장 현황 리포트</span>
         </div>
       </div>
+    </div>
+  </div>
+</section>
 
-      <div class="summary-card card">
-        <div class="card-header">AI 3줄 요약</div>
-        <ul id="ai-summary" class="summary-list">
-          <li>영상을 분석 중입니다...</li>
+<!-- 요금제 요약 -->
+<section class="section" style="background: var(--bg-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">요금제</span>
+      <h2 class="section-title">먼저 무료로 써보세요</h2>
+      <p class="section-desc">신용카드 없이 바로 시작할 수 있습니다.</p>
+    </div>
+    <div class="pricing-preview">
+      <div class="pricing-card">
+        <div class="pricing-plan-name">무료</div>
+        <div class="pricing-price">0<span>원</span></div>
+        <div class="pricing-period">매월 무료</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature-item"><span class="check">✓</span> Spotlight Compare 월 5회</li>
+          <li class="pricing-feature-item"><span class="check">✓</span> 기본 비교 리포트</li>
         </ul>
+        <a href="/auth.html?mode=signup" class="btn btn-secondary btn-full">시작하기</a>
       </div>
-
-      <div class="keywords-card card">
-        <div class="card-header">핵심 키워드</div>
-        <div id="keyword-cloud" class="keyword-tags"></div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">가장 인기</div>
+        <div class="pricing-plan-name">STARTER</div>
+        <div class="pricing-price">9,900<span>원</span></div>
+        <div class="pricing-period">/월</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature-item"><span class="check">✓</span> Spotlight Compare 무제한</li>
+          <li class="pricing-feature-item"><span class="check">✓</span> Timing Report</li>
+          <li class="pricing-feature-item"><span class="check">✓</span> 전체 비교 리포트</li>
+        </ul>
+        <a href="/pricing.html" class="btn btn-primary btn-full">구독하기</a>
       </div>
-    </section>
-
-    <!-- Community Section (Disqus) -->
-    <section class="community-section card">
-      <div class="card-header">💬 커뮤니티 토론</div>
-      <div id="disqus_thread" style="min-height: 200px; width: 100%;"></div>
-    </section>
-  </main>
-
-  <!-- Partnership Inquiry Modal -->
-  <dialog id="partnership-modal" class="premium-modal">
-    <div class="modal-content">
-      <header class="modal-header">
-        <h2>🤝 제휴 문의하기</h2>
-        <button id="close-modal-btn" class="close-btn">&times;</button>
-      </header>
-      <form action="https://formspree.io/f/xlgpezwr" method="POST" id="partnership-form">
-        <div class="form-group">
-          <label for="name">성함</label>
-          <input type="text" id="name" name="name" required placeholder="홍길동">
-        </div>
-        <div class="form-group">
-          <label for="email">이메일 주소</label>
-          <input type="email" id="email" name="_replyto" required placeholder="example@domain.com">
-        </div>
-        <div class="form-group">
-          <label for="company">업체명/소속</label>
-          <input type="text" id="company" name="company" required placeholder="비즈니스 파트너">
-        </div>
-        <div class="form-group">
-          <label for="inquiry-type">문의 유형</label>
-          <select id="inquiry-type" name="inquiry_type">
-            <option value="partnership">비즈니스 제휴</option>
-            <option value="marketing">마케팅/홍보</option>
-            <option value="technical">기술 연동</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="message">문의 내용</label>
-          <textarea id="message" name="message" required placeholder="협업 아이디어를 자유롭게 들려주세요."></textarea>
-        </div>
-        <button type="submit" class="submit-btn">문의 보내기</button>
-      </form>
+      <div class="pricing-card">
+        <div class="pricing-plan-name">PRO</div>
+        <div class="pricing-price">19,900<span>원</span></div>
+        <div class="pricing-period">/월</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature-item"><span class="check">✓</span> STARTER 모든 기능</li>
+          <li class="pricing-feature-item"><span class="check">✓</span> 우선 분석 처리</li>
+          <li class="pricing-feature-item"><span class="check">✓</span> 리포트 내보내기</li>
+        </ul>
+        <a href="/pricing.html" class="btn btn-secondary btn-full">구독하기</a>
+      </div>
     </div>
-  </dialog>
+  </div>
+</section>
 
-  <script>
-    var disqus_config = function () {
-      this.page.url = window.location.href;
-      this.page.identifier = window.location.pathname;
-    };
-    (function() {
-      var d = document, s = d.createElement('script');
-      s.src = 'https://test2-ydalbjgxyi.disqus.com/embed.js';
-      s.setAttribute('data-timestamp', +new Date());
-      (d.head || d.body).appendChild(s);
-    })();
-  </script>
-  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<!-- CTA -->
+<section class="section" style="text-align: center;">
+  <div class="container">
+    <h2 class="section-title" style="max-width: 600px; margin: 0 auto 20px;">
+      지금 내 카테고리의 스포트 패턴을<br>확인해보세요
+    </h2>
+    <p class="section-desc" style="margin-bottom: 36px;">
+      무료 플랜으로 바로 시작할 수 있습니다.
+    </p>
+    <a href="/auth.html?mode=signup" class="btn btn-primary btn-lg">무료로 시작하기 →</a>
+    <p style="margin-top: 14px; font-size: 13px; color: var(--text-3);">월 5회 무료 · 신용카드 불필요</p>
+  </div>
+</section>
 
-  <script defer type="module" src="/main.js"></script>
+<!-- 푸터 -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">MOMENTO</div>
+      <p class="footer-copy">© 2026 MOMENTO. 한국 유튜브 크리에이터 전용.</p>
+      <div class="footer-links">
+        <a href="#" class="footer-link">이용약관</a>
+        <a href="#" class="footer-link">개인정보처리방침</a>
+        <a href="#" class="footer-link">문의</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="/main.js"></script>
 </body>
 </html>

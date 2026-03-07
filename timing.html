@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Timing Report — MOMENTO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body class="app-layout">
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/dashboard.html" class="nav-logo">
+      <span class="logo-icon">M</span>
+      MOMENTO
+    </a>
+    <div class="nav-links">
+      <a href="/dashboard.html" class="nav-link"        data-page="dashboard">대시보드</a>
+      <a href="/spotlight.html" class="nav-link"         data-page="spotlight">Spotlight</a>
+      <a href="/timing.html"    class="nav-link active"  data-page="timing">Timing</a>
+      <a href="/pricing.html"   class="nav-link"         data-page="pricing">요금제</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/mypage.html" class="btn btn-ghost btn-sm">마이페이지</a>
+      <button class="btn btn-secondary btn-sm" id="logout-btn">로그아웃</button>
+    </div>
+  </div>
+</nav>
+
+<main class="app-main">
+
+  <div id="auth-loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <span>잠시만 기다려주세요...</span>
+  </div>
+
+  <!-- 플랜 잠금 -->
+  <div id="plan-locked" class="hidden" style="padding-top: 40px;">
+    <div class="upgrade-prompt">
+      <div class="up-icon">⏱</div>
+      <h2 class="up-title">Timing Report는 STARTER 플랜부터 사용 가능합니다</h2>
+      <p class="up-desc">
+        영상 주제의 시장 현황, 포화도, 최근 업로드 빈도, 주목받은 타이밍을<br>
+        STARTER 플랜 이상에서 무제한으로 확인할 수 있습니다.
+      </p>
+      <a href="/pricing.html" class="btn btn-primary btn-lg">플랜 업그레이드하기</a>
+    </div>
+  </div>
+
+  <!-- 페이지 콘텐츠 -->
+  <div id="page-content" class="hidden">
+
+    <div class="page-header">
+      <h1 class="page-title">⏱ Timing Report</h1>
+      <p class="page-desc">영상 주제를 입력하면 지금 그 주제의 시장 현황을 보여드립니다. "올려야 한다"가 아닌 "현재 상황은 이렇습니다".</p>
+    </div>
+
+    <div class="timing-layout">
+
+      <!-- 입력 패널 -->
+      <aside class="input-panel">
+        <h2 class="input-panel-title">주제 입력</h2>
+
+        <div class="input-form">
+          <div class="form-group">
+            <label class="form-label" for="topic-input">영상 주제 또는 키워드</label>
+            <input type="text" id="topic-input" class="form-input"
+              placeholder="예: 다이어트, 재테크, 혼자 여행" maxlength="60" />
+            <span class="form-hint">주제를 한 단어 또는 짧은 문장으로 입력하세요.</span>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="timing-btn" style="padding: 13px;">
+            시장 현황 분석
+          </button>
+        </div>
+      </aside>
+
+      <!-- 결과 패널 -->
+      <section id="result-panel">
+
+        <div id="result-empty" class="empty-state" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl);">
+          <div class="empty-icon">⏱</div>
+          <div class="empty-title">시장 현황이 여기에 표시됩니다</div>
+          <div class="empty-desc">왼쪽에 영상 주제를 입력하고 분석을 시작하세요.</div>
+        </div>
+
+        <div id="result-loading" class="result-loading hidden">
+          <div class="spinner"></div>
+          <span>주제 관련 영상 데이터를 분석하는 중...</span>
+        </div>
+
+        <div id="result-error" class="hidden">
+          <div class="alert alert-error" style="border-radius: var(--radius-xl); padding: 24px;">
+            <span>⚠️</span>
+            <div id="result-error-msg"></div>
+          </div>
+        </div>
+
+        <div id="timing-result" class="hidden">
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 0 4px;">
+            <div style="font-size: 15px; font-weight: 700;">
+              "<span id="result-topic"></span>" 주제 현황
+            </div>
+            <div style="font-size: 12px; color: var(--text-3);" id="result-time"></div>
+          </div>
+
+          <!-- 포화도 게이지 -->
+          <div class="saturation-gauge">
+            <div class="gauge-title">주제 포화도</div>
+            <div class="gauge-value" id="saturation-label">—</div>
+            <div class="gauge-bar">
+              <div class="gauge-fill" id="saturation-bar" style="width: 0%;"></div>
+            </div>
+            <div style="font-size: 13px; color: var(--text-2); margin-top: 4px;" id="saturation-desc"></div>
+          </div>
+
+          <!-- 시장 현황 통계 -->
+          <div class="timing-stat-list">
+            <div class="timing-stat-item">
+              <div class="timing-stat-label">최근 30일 업로드 수</div>
+              <div class="timing-stat-value" id="upload-count">—</div>
+              <div class="timing-stat-note" id="upload-count-note"></div>
+            </div>
+            <div class="timing-stat-item">
+              <div class="timing-stat-label">주목받은 영상의 업로드 시간대</div>
+              <div class="timing-stat-value" id="peak-timing">—</div>
+              <div class="timing-stat-note" id="peak-timing-note"></div>
+            </div>
+            <div class="timing-stat-item">
+              <div class="timing-stat-label">평균 조회수</div>
+              <div class="timing-stat-value" id="avg-views">—</div>
+              <div class="timing-stat-note" id="avg-views-note"></div>
+            </div>
+          </div>
+
+          <!-- 최근 관련 영상 목록 -->
+          <div class="recent-videos" style="margin-top: 20px;">
+            <div class="recent-videos-header">
+              <span class="recent-videos-title">최근 주목받은 관련 영상</span>
+              <span style="font-size: 13px; color: var(--text-3);">최근 30일 기준</span>
+            </div>
+            <div id="video-list"></div>
+          </div>
+
+          <p style="margin-top: 14px; font-size: 12px; color: var(--text-3); padding: 0 4px;">
+            데이터 출처: YouTube Data API v3 · 한국(KR) 기준
+          </p>
+        </div>
+
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/timing.js"></script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>결제 — MOMENTO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+  <!-- 토스페이먼츠 SDK -->
+  <script src="https://js.tosspayments.com/v1/payment"></script>
+</head>
+<body class="app-layout">
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/dashboard.html" class="nav-logo">
+      <span class="logo-icon">M</span>
+      MOMENTO
+    </a>
+    <div class="nav-actions">
+      <a href="/pricing.html" class="btn btn-ghost btn-sm">← 요금제로 돌아가기</a>
+    </div>
+  </div>
+</nav>
+
+<main class="app-main" style="max-width: 540px;">
+
+  <div id="auth-loading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <div id="page-content" class="hidden">
+
+    <div class="page-header">
+      <h1 class="page-title">결제</h1>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 18px; font-weight: 700;" id="plan-title">STARTER</h2>
+        <span class="badge badge-purple" id="plan-badge">구독</span>
+      </div>
+      <hr class="divider">
+      <div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-2);">플랜</span>
+          <span id="plan-name-disp" style="font-weight: 600;"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-2);">결제 금액</span>
+          <span id="plan-price-disp" style="font-weight: 700; font-size: 18px;"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-2);">결제 주기</span>
+          <span>매월 자동 결제</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-2);">해지</span>
+          <span>언제든 가능</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+      <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">주문자 정보</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">이메일</label>
+          <input type="email" id="payer-email" class="form-input" placeholder="결제 확인 이메일" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">이름</label>
+          <input type="text" id="payer-name" class="form-input" placeholder="홍길동" />
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-info" style="margin-bottom: 20px;">
+      <span>ℹ️</span>
+      <div>결제 후 즉시 플랜이 활성화됩니다. 해지 후에도 결제한 달 말까지 유지됩니다.</div>
+    </div>
+
+    <div id="pay-error" class="auth-error hidden" style="margin-bottom: 16px;"></div>
+
+    <button class="btn btn-primary btn-full btn-lg" id="pay-btn">
+      결제하기
+    </button>
+    <p style="text-align:center; margin-top: 12px; font-size: 12px; color: var(--text-3);">
+      토스페이먼츠를 통한 안전한 결제
+    </p>
+  </div>
+</main>
+
+<script type="module">
+import { auth, db, TOSS_CLIENT_KEY } from './firebase-config.js';
+import { requireAuth } from './utils.js';
+import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const PLANS = {
+  starter: { name: 'STARTER', price: 9900 },
+  pro:     { name: 'PRO',     price: 19900 },
+};
+
+const params = new URLSearchParams(window.location.search);
+const planKey = params.get('plan') || 'starter';
+const plan = PLANS[planKey] || PLANS.starter;
+
+requireAuth((user, userData) => {
+  document.getElementById('auth-loading').classList.add('hidden');
+  document.getElementById('page-content').classList.remove('hidden');
+
+  document.getElementById('plan-title').textContent   = plan.name;
+  document.getElementById('plan-name-disp').textContent  = plan.name;
+  document.getElementById('plan-price-disp').textContent = plan.price.toLocaleString('ko-KR') + '원/월';
+
+  // 이미 해당 플랜이면 대시보드로
+  if (userData.plan === planKey) {
+    window.location.href = '/dashboard.html';
+    return;
+  }
+
+  // 이메일 자동 입력
+  document.getElementById('payer-email').value = user.email || '';
+  document.getElementById('payer-name').value  = user.displayName || '';
+
+  document.getElementById('pay-btn').addEventListener('click', async () => {
+    const email = document.getElementById('payer-email').value.trim();
+    const name  = document.getElementById('payer-name').value.trim();
+
+    if (!email || !name) {
+      document.getElementById('pay-error').textContent = '이름과 이메일을 입력해주세요.';
+      document.getElementById('pay-error').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('pay-error').classList.add('hidden');
+
+    // ⚠️ 토스페이먼츠 API 키가 설정되지 않은 경우 시뮬레이션
+    if (TOSS_CLIENT_KEY === 'YOUR_TOSS_CLIENT_KEY') {
+      await simulatePayment(user.uid, planKey);
+      return;
+    }
+
+    // 토스페이먼츠 결제 요청
+    const tossPayments = TossPayments(TOSS_CLIENT_KEY);
+    const orderId = `MOMENTO-${user.uid.slice(0,8)}-${Date.now()}`;
+
+    try {
+      await tossPayments.requestPayment('카드', {
+        amount: plan.price,
+        orderId,
+        orderName: `MOMENTO ${plan.name} 구독`,
+        customerEmail: email,
+        customerName: name,
+        successUrl: `${window.location.origin}/payment-success.html?plan=${planKey}&orderId=${orderId}`,
+        failUrl: `${window.location.origin}/payment.html?plan=${planKey}&error=payment_failed`,
+      });
+    } catch (e) {
+      if (e.code !== 'USER_CANCEL') {
+        document.getElementById('pay-error').textContent = '결제 중 오류가 발생했습니다: ' + e.message;
+        document.getElementById('pay-error').classList.remove('hidden');
+      }
+    }
+  });
+
+  // 시뮬레이션 (API 키 미설정 시 데모용)
+  async function simulatePayment(uid, planKey) {
+    const btn = document.getElementById('pay-btn');
+    btn.textContent = '처리 중...';
+    btn.disabled = true;
+
+    await new Promise(r => setTimeout(r, 1500));
+
+    const end = new Date();
+    end.setMonth(end.getMonth() + 1);
+
+    await updateDoc(doc(db, 'users', uid), {
+      plan: planKey,
+      subscriptionEnd: end,
+    });
+
+    alert(`[데모] ${plan.name} 구독이 활성화되었습니다!\n실제 서비스에서는 토스페이먼츠 결제가 진행됩니다.`);
+    window.location.href = '/dashboard.html';
+  }
+});
+</script>
+</body>
+</html>
