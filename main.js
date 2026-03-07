@@ -1,209 +1,81 @@
-// Mock Course Data
-const courses = [
-  { id: 'CS101', name: '컴퓨터 프로그래밍 기초', professor: '이철수', credits: 3, time: [{ day: 1, start: 9, end: 11 }, { day: 3, start: 9, end: 10 }], room: '공학관 101호' },
-  { id: 'CS102', name: '자료구조', professor: '김영희', credits: 3, time: [{ day: 2, start: 10, end: 12 }, { day: 4, start: 10, end: 11 }], room: '공학관 202호' },
-  { id: 'MATH101', name: '이산수학', professor: '박지성', credits: 3, time: [{ day: 1, start: 13, end: 15 }], room: '이학관 303호' },
-  { id: 'ENG201', name: '고급 영어 회화', professor: 'John Doe', credits: 2, time: [{ day: 5, start: 9, end: 11 }], room: '교양관 404호' },
-  { id: 'DES301', name: 'UI/UX 디자인', professor: '최유리', credits: 3, time: [{ day: 3, start: 14, end: 17 }], room: '예술관 505호' },
-  { id: 'PHY101', name: '일반물리학', professor: '한석규', credits: 3, time: [{ day: 2, start: 14, end: 16 }, { day: 4, start: 14, end: 15 }], room: '과학관 102호' },
-  { id: 'BA201', name: '마케팅 원론', professor: '정우성', credits: 3, time: [{ day: 1, start: 10, end: 12 }], room: '경영관 201호' },
-  { id: 'HIS101', name: '한국의 역사', professor: '강호동', credits: 2, time: [{ day: 4, start: 11, end: 13 }], room: '인문관 101호' },
-];
-
-const days = ['시간', '월', '화', '수', '목', '금'];
-const hours = Array.from({ length: 14 }, (_, i) => i + 9); // 9:00 to 22:00
-
-class CourseRegistrationApp {
+class YouTubeAnalyzer {
   constructor() {
-    this.registeredCourses = new Set();
-    this.totalCredits = 0;
-    this.maxCredits = 21;
+    this.urlInput = document.getElementById('youtube-url');
+    this.analyzeBtn = document.getElementById('analyze-btn');
+    this.dashboard = document.getElementById('analysis-dashboard');
+    this.videoEmbed = document.getElementById('video-embed');
+    this.videoTitle = document.getElementById('video-title');
+    this.sentimentScore = document.getElementById('sentiment-score');
+    this.engagementIndex = document.getElementById('engagement-index');
+    this.summaryList = document.getElementById('ai-summary');
+    this.keywordCloud = document.getElementById('keyword-cloud');
 
     this.init();
   }
 
   init() {
-    this.renderTimetableGrid();
-    this.renderCourseList(courses);
-    this.setupEventListeners();
-    this.updateCreditsDisplay();
-  }
-
-  setupEventListeners() {
-    const searchInput = document.getElementById('course-search-input');
-    const searchBtn = document.getElementById('search-btn');
-
-    const handleSearch = () => {
-      const query = searchInput.value.toLowerCase();
-      const filtered = courses.filter(c => 
-        c.name.toLowerCase().includes(query) || 
-        c.professor.toLowerCase().includes(query) ||
-        c.id.toLowerCase().includes(query)
-      );
-      this.renderCourseList(filtered);
-    };
-
-    searchInput.addEventListener('input', handleSearch);
-    searchBtn.addEventListener('click', handleSearch);
-  }
-
-  renderTimetableGrid() {
-    const container = document.getElementById('timetable-container');
-    container.innerHTML = '';
-
-    // Headers
-    days.forEach(day => {
-      const header = document.createElement('div');
-      header.className = 'grid-header';
-      header.textContent = day;
-      container.appendChild(header);
-    });
-
-    // Rows
-    hours.forEach(hour => {
-      const timeLabel = document.createElement('div');
-      timeLabel.className = 'grid-time-label';
-      timeLabel.textContent = `${hour}:00`;
-      container.appendChild(timeLabel);
-
-      for (let i = 1; i <= 5; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'grid-cell';
-        cell.dataset.day = i;
-        cell.dataset.hour = hour;
-        container.appendChild(cell);
-      }
+    this.analyzeBtn.addEventListener('click', () => this.analyze());
+    this.urlInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') this.analyze();
     });
   }
 
-  renderCourseList(courseData) {
-    const container = document.getElementById('course-list-container');
-    container.innerHTML = '';
-
-    courseData.forEach(course => {
-      const isRegistered = this.registeredCourses.has(course.id);
-      const item = document.createElement('div');
-      item.className = 'course-item';
-      item.innerHTML = `
-        <div class="course-info">
-          <h4>${course.name}</h4>
-          <div class="course-meta">
-            <span>${course.id}</span>
-            <span>${course.professor}</span>
-            <span>${course.credits}학점</span>
-            <span>${this.formatTime(course.time)}</span>
-          </div>
-        </div>
-        <button class="register-btn ${isRegistered ? 'cancel' : ''}" data-id="${course.id}">
-          ${isRegistered ? '취소' : '신청'}
-        </button>
-      `;
-
-      item.querySelector('button').addEventListener('click', () => this.toggleRegistration(course));
-      container.appendChild(item);
-    });
+  extractVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
   }
 
-  renderCart() {
-    const container = document.getElementById('cart-container');
-    container.innerHTML = '';
+  async analyze() {
+    const url = this.urlInput.value;
+    const videoId = this.extractVideoId(url);
 
-    if (this.registeredCourses.size === 0) {
-      container.innerHTML = '<div style="text-align:center; padding: 2rem; color: var(--text-muted);">신청된 강의가 없습니다.</div>';
+    if (!videoId) {
+      alert('올바른 YouTube URL을 입력해주세요.');
       return;
     }
 
-    this.registeredCourses.forEach(courseId => {
-      const course = courses.find(c => c.id === courseId);
-      const item = document.createElement('div');
-      item.className = 'course-item';
-      item.style.animation = 'none';
-      item.innerHTML = `
-        <div class="course-info">
-          <h4>${course.name}</h4>
-          <div class="course-meta">
-            <span>${course.credits}학점</span>
-            <span>${course.professor}</span>
-          </div>
-        </div>
-        <button class="register-btn cancel" data-id="${course.id}">취소</button>
-      `;
-      item.querySelector('button').addEventListener('click', () => this.toggleRegistration(course));
-      container.appendChild(item);
-    });
+    this.showLoading();
+
+    // Mock API Delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    this.renderAnalysis(videoId);
   }
 
-  toggleRegistration(course) {
-    if (this.registeredCourses.has(course.id)) {
-      this.registeredCourses.delete(course.id);
-      this.totalCredits -= course.credits;
-    } else {
-      // Check credits limit
-      if (this.totalCredits + course.credits > this.maxCredits) {
-        alert(`최대 수강 가능 학점(${this.maxCredits}학점)을 초과할 수 없습니다.`);
-        return;
-      }
-
-      // Check time overlap
-      if (this.hasTimeOverlap(course)) {
-        alert('이미 신청한 강의와 시간이 겹칩니다.');
-        return;
-      }
-
-      this.registeredCourses.add(course.id);
-      this.totalCredits += course.credits;
-    }
-
-    this.updateCreditsDisplay();
-    this.renderCourseList(courses);
-    this.renderCart();
-    this.updateTimetable();
+  showLoading() {
+    this.dashboard.classList.remove('hidden');
+    this.videoTitle.textContent = "분석 중...";
+    this.sentimentScore.textContent = "--";
+    this.engagementIndex.textContent = "--";
+    this.summaryList.innerHTML = "<li>AI가 영상을 시청하고 분석 중입니다...</li>";
+    this.keywordCloud.innerHTML = "";
   }
 
-  hasTimeOverlap(newCourse) {
-    for (let registeredId of this.registeredCourses) {
-      const registeredCourse = courses.find(c => c.id === registeredId);
-      for (let newTime of newCourse.time) {
-        for (let regTime of registeredCourse.time) {
-          if (newTime.day === regTime.day) {
-            if (!(newTime.end <= regTime.start || newTime.start >= regTime.end)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
+  renderAnalysis(videoId) {
+    this.videoEmbed.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    
+    // Mock Data
+    const mockData = {
+      title: "AI가 분석한 추천 영상 통찰",
+      sentiment: "84%",
+      engagement: "Extremely High",
+      summary: [
+        "이 영상은 최신 기술 트렌드와 사용자 경험의 결합을 심도 있게 다룹니다.",
+        "주요 타겟층은 2030 테크 애호가들이며, 긍정적인 반응이 지배적입니다.",
+        "영상 중반부의 시각적 연출이 시청자 유지율을 크게 높이는 요소로 작용했습니다."
+      ],
+      keywords: ["인공지능", "미래기술", "사용자경험", "트렌드분석", "혁신", "디지털트랜스포메이션"]
+    };
 
-  updateTimetable() {
-    // Clear previous events
-    document.querySelectorAll('.timetable-event').forEach(el => el.remove());
-
-    this.registeredCourses.forEach(courseId => {
-      const course = courses.find(c => c.id === courseId);
-      course.time.forEach(t => {
-        const startRow = t.start - 9 + 2; // +1 for header, +1 for 0-indexed adjustment
-        const col = t.day + 1;
-        const duration = t.end - t.start;
-
-        const event = document.createElement('div');
-        event.className = 'timetable-event';
-        event.style.gridRow = `${startRow} / span ${duration}`;
-        event.style.gridColumn = col;
-        event.innerHTML = `<strong>${course.name}</strong><br>${course.room}`;
-        
-        document.getElementById('timetable-container').appendChild(event);
-      });
-    });
-  }
-
-  updateCreditsDisplay() {
-    document.getElementById('total-credits').textContent = this.totalCredits;
-  }
-
-  formatTime(times) {
-    return times.map(t => `${days[t.day]}(${t.start}:00-${t.end}:00)`).join(', ');
+    this.videoTitle.textContent = mockData.title;
+    this.sentimentScore.textContent = mockData.sentiment;
+    this.engagementIndex.textContent = mockData.engagement;
+    
+    this.summaryList.innerHTML = mockData.summary.map(item => `<li>${item}</li>`).join('');
+    this.keywordCloud.innerHTML = mockData.keywords.map(kw => `<span>#${kw}</span>`).join('');
+    
+    this.dashboard.scrollIntoView({ behavior: 'smooth' });
   }
 }
 
@@ -212,7 +84,6 @@ class PartnershipModal {
     this.modal = document.getElementById('partnership-modal');
     this.openBtn = document.getElementById('partnership-btn');
     this.closeBtn = document.getElementById('close-modal-btn');
-    this.form = document.getElementById('partnership-form');
 
     this.init();
   }
@@ -220,35 +91,19 @@ class PartnershipModal {
   init() {
     if (!this.modal || !this.openBtn || !this.closeBtn) return;
 
-    this.openBtn.addEventListener('click', () => {
-      this.modal.showModal();
-    });
+    this.openBtn.addEventListener('click', () => this.modal.showModal());
+    this.closeBtn.addEventListener('click', () => this.modal.close());
 
-    this.closeBtn.addEventListener('click', () => {
-      this.modal.close();
-    });
-
-    // Close on backdrop click
     this.modal.addEventListener('click', (e) => {
-      const dialogDimensions = this.modal.getBoundingClientRect();
-      if (
-        e.clientX < dialogDimensions.left ||
-        e.clientX > dialogDimensions.right ||
-        e.clientY < dialogDimensions.top ||
-        e.clientY > dialogDimensions.bottom
-      ) {
+      const rect = this.modal.getBoundingClientRect();
+      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
         this.modal.close();
       }
     });
-
-    // Form submission feedback (optional, as Formspree redirects by default)
-    // If you want to handle it via AJAX, you can preventDefault and use fetch.
-    // For "simple form", standard POST is fine.
   }
 }
 
-// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
-  new CourseRegistrationApp();
+  new YouTubeAnalyzer();
   new PartnershipModal();
 });

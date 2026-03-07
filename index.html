@@ -3,24 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>University Course Registration System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>YouTube AI Video Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href='/style.css' rel='stylesheet'>
 </head>
-<body>
+<body class="theme-light">
   <header class="app-header">
     <div class="header-container">
       <div class="logo">
-        <span class="icon">🎓</span>
-        <h1>Korea University Port</h1>
+        <span class="icon">🎬</span>
+        <h1>AI Video Analyzer</h1>
       </div>
-      <div class="user-info">
+      <div class="nav-actions">
         <button id="partnership-btn" class="secondary-btn">🤝 제휴 문의</button>
-        <span class="user-name">김민수 (20240001)</span>
-        <span class="credits-info">신청학점: <strong id="total-credits">0</strong> / 21</span>
       </div>
     </div>
   </header>
+
+  <main class="main-container">
+    <!-- Hero / Input Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h2>영상을 분석하고 통찰을 얻으세요</h2>
+        <p>YouTube 링크를 입력하면 AI가 내용을 요약하고 감성 및 참여도를 분석합니다.</p>
+        <div class="search-box">
+          <input type="text" id="youtube-url" placeholder="YouTube 영상 URL을 입력하세요 (예: https://www.youtube.com/watch?v=...)">
+          <button id="analyze-btn">분석 시작</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analysis Dashboard -->
+    <section id="analysis-dashboard" class="dashboard-grid hidden">
+      <div class="video-preview-card card">
+        <div class="card-header">영상 미리보기</div>
+        <div id="video-embed" class="embed-container"></div>
+        <h3 id="video-title">분석을 위해 링크를 입력해주세요</h3>
+      </div>
+
+      <div class="metrics-card card">
+        <div class="card-header">주요 통계</div>
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="label">감성 점수</span>
+            <span class="value" id="sentiment-score">--</span>
+          </div>
+          <div class="metric-item">
+            <span class="label">참여 지수</span>
+            <span class="value" id="engagement-index">--</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card card">
+        <div class="card-header">AI 3줄 요약</div>
+        <ul id="ai-summary" class="summary-list">
+          <li>영상을 분석 중입니다...</li>
+        </ul>
+      </div>
+
+      <div class="keywords-card card">
+        <div class="card-header">핵심 키워드</div>
+        <div id="keyword-cloud" class="keyword-tags"></div>
+      </div>
+    </section>
+
+    <!-- Community Section (Disqus) -->
+    <section class="community-section card">
+      <div class="card-header">커뮤니티 토론</div>
+      <div id="disqus_thread"></div>
+    </section>
+  </main>
 
   <!-- Partnership Inquiry Modal -->
   <dialog id="partnership-modal" class="premium-modal">
@@ -40,60 +93,35 @@
         </div>
         <div class="form-group">
           <label for="company">업체명/소속</label>
-          <input type="text" id="company" name="company" required placeholder="OO대학교 / OO기업">
+          <input type="text" id="company" name="company" required placeholder="비즈니스 파트너">
         </div>
         <div class="form-group">
           <label for="inquiry-type">문의 유형</label>
           <select id="inquiry-type" name="inquiry_type">
             <option value="partnership">비즈니스 제휴</option>
             <option value="marketing">마케팅/홍보</option>
-            <option value="technical">기술 지원/연동</option>
-            <option value="other">기타 문의</option>
+            <option value="technical">기술 연동</option>
           </select>
         </div>
         <div class="form-group">
           <label for="message">문의 내용</label>
-          <textarea id="message" name="message" required placeholder="문의하실 내용을 상세히 적어주세요."></textarea>
+          <textarea id="message" name="message" required placeholder="협업 아이디어를 자유롭게 들려주세요."></textarea>
         </div>
-        <button type="submit" class="submit-btn">보내기</button>
+        <button type="submit" class="submit-btn">문의 보내기</button>
       </form>
     </div>
   </dialog>
 
-  <main class="main-content">
-    <div class="left-panel">
-      <section class="search-section">
-        <div class="section-title">강의 조회</div>
-        <div class="search-bar">
-          <input type="text" id="course-search-input" placeholder="강의명 또는 교수명을 입력하세요...">
-          <button id="search-btn">🔍</button>
-        </div>
-      </section>
-      
-      <section class="course-list-section">
-        <div class="section-title">개설 강좌 목록</div>
-        <div id="course-list-container" class="scrollable-container">
-          <!-- Courses will be rendered here via Web Components or JS -->
-        </div>
-      </section>
-    </div>
-
-    <div class="right-panel">
-      <section class="timetable-section">
-        <div class="section-title">실시간 시간표</div>
-        <div id="timetable-container" class="timetable-grid">
-          <!-- Timetable Grid -->
-        </div>
-      </section>
-
-      <section class="cart-section">
-        <div class="section-title">수강 신청 내역</div>
-        <div id="cart-container" class="scrollable-container">
-          <!-- Cart items will be rendered here -->
-        </div>
-      </section>
-    </div>
-  </main>
+  <!-- Disqus Script -->
+  <script>
+      (function() {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://test-50tbhkdivl.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 
   <script defer type="module" src="/main.js"></script>
 </body>

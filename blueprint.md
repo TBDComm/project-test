@@ -1,31 +1,25 @@
-# Project Blueprint: University Course Registration System & Partnership Inquiry
+# Project Blueprint: YouTube Video AI Analyzer
 
 ## Project Overview
-A modern, framework-less web application for university course registration, featuring real-time timetable management and now, a premium partnership inquiry system.
+A high-performance, aesthetically pleasing web application that analyzes YouTube videos. It provides a "premium" experience with AI-driven insights, glassmorphism UI, and community interaction.
 
-## Current Features & Design
-- **Core Functionality:** Course searching, registration, and visual timetable representation.
-- **Design Philosophy:** Clean, professional interface with a "Korea University Port" theme.
-- **Tech Stack:** HTML5, CSS3 (Baseline features), Vanilla JavaScript (ES Modules).
-- **Styling:** Responsive layout using CSS Grid and Flexbox, typography-focused design.
+## Core Features
+- **YouTube Link Analysis:** Input field for YouTube URLs with instant preview and mock AI analysis data.
+- **Visual Analytics:** Dashboard showing engagement metrics, sentiment analysis, and keyword extraction.
+- **Partnership Inquiry:** Integrated Formspree system (`https://formspree.io/f/xlgpezwr`) for business inquiries.
+- **Community Discussion:** Disqus comment system for user feedback and discussion.
 
-## Planned Changes: Partnership Inquiry Form
-### Purpose
-To allow potential partners to submit inquiry forms directly via the website using Formspree.
+## Design Philosophy
+- **Aesthetics:** "Modern Dark/Light Hybrid" with `oklch` dynamic colors.
+- **Components:** Custom Web Components for analytics cards.
+- **Effects:** Backdrop filters (blur), multi-layered shadows, and subtle noise textures.
 
-### Implementation Plan
-1.  **UI Integration:**
-    - Add a "제휴 문의" (Partnership Inquiry) button in the header.
-    - Implement a modern modal dialog for the form to keep the user context.
-2.  **Form Design:**
-    - **Fields:** Name (이름), Email (이메일), Company (업체명), Inquiry Type (문의 유형), Message (내용).
-    - **Aesthetics:** Glassmorphism effect for the modal, `oklch` color palettes, subtle noise texture, and deep shadows for a "premium" feel.
-    - **Accessibility:** Proper labels, ARIA roles for the modal, and keyboard navigation support.
-3.  **Functionality:**
-    - Integrate Formspree (Endpoint: `https://formspree.io/f/xlgpezwr`).
-    - Use JavaScript to handle modal states and provide visual feedback upon submission.
-    - Ensure responsive design using Container Queries where applicable.
+## Tech Stack
+- **Frontend:** Vanilla JS (ES Modules), HTML5, CSS3 (Baseline).
+- **Integrations:** Formspree (Forms), Disqus (Comments), Three.js (Optional 3D background elements).
 
-### Technical Details
-- **Formspree Action:** `https://formspree.io/f/xlgpezwr`
-- **CSS Techniques:** `@layer` for style organization, `:has()` for state-based styling, and CSS Variables for theming.
+## Implementation Steps
+1.  **Refactor index.html:** Remove course registration elements; add Video Input, Analysis Dashboard, and Disqus thread.
+2.  **Update style.css:** Implement a cleaner, analysis-focused layout with a focus on "Data Visualization" aesthetics.
+3.  **Rewrite main.js:** Logic for parsing YouTube IDs, generating mock analysis, and managing UI states.
+4.  **Verification:** Ensure all integrations (Formspree, Disqus) load correctly.
