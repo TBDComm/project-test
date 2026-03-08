@@ -22,7 +22,7 @@ window.toggleTheme = function () {
   document.querySelectorAll('.theme-toggle').forEach(function (btn) {
     btn.setAttribute('aria-label', next === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
     var icon = btn.querySelector('.theme-icon');
-    if (icon) icon.textContent = next === 'dark' ? '○' : '●';
+    if (icon) icon.textContent = next === 'dark' ? '◆' : '◇';
   });
 
   // mypage 설정 탭 레이블 갱신 (있는 경우)

@@ -38,6 +38,7 @@ const LENGTH_BUCKETS = [
   { label: '26~30자', min: 26, max: 30 },
   { label: '31자+', min: 31, max: Infinity },
 ]
+const SPOTLIGHT_STATE_VERSION = 'v1'
 
 async function fetchTrendingVideos(categoryId, contentType) {
   const cacheKey = `spotlight_${categoryId}_${contentType}`
@@ -236,12 +237,58 @@ export default function Spotlight() {
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
   const [localUserData, setLocalUserData] = useState(userData)
+  const spotlightStorageKey = useMemo(
+    () => `momento_spotlight_state_${SPOTLIGHT_STATE_VERSION}_${user?.id || 'guest'}`,
+    [user?.id]
+  )
+  const [spotlightHydrated, setSpotlightHydrated] = useState(false)
 
   useEffect(() => {
     if (userData !== null && localUserData === null) {
       setLocalUserData(userData)
     }
   }, [userData, localUserData])
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(spotlightStorageKey)
+      if (!raw) {
+        setSpotlightHydrated(true)
+        return
+      }
+      const saved = JSON.parse(raw)
+      setVideoTitle(typeof saved.videoTitle === 'string' ? saved.videoTitle : '')
+      setThumbnailText(typeof saved.thumbnailText === 'string' ? saved.thumbnailText : '')
+      setCategory(typeof saved.category === 'string' ? saved.category : '')
+      setContentType(saved.contentType === '숏폼' ? '숏폼' : '롱폼')
+      setResult(saved.result ?? null)
+      setErrorMsg(typeof saved.errorMsg === 'string' ? saved.errorMsg : '')
+      setStatus(saved.result ? 'result' : (saved.status === 'error' ? 'error' : 'empty'))
+    } catch {
+      // ignore invalid persisted state
+    } finally {
+      setSpotlightHydrated(true)
+    }
+  }, [spotlightStorageKey, user?.id])
+
+  useEffect(() => {
+    if (!spotlightHydrated || !user?.id || status === 'loading') return
+    const payload = {
+      videoTitle,
+      thumbnailText,
+      category,
+      contentType,
+      status,
+      errorMsg,
+      result,
+    }
+    try {
+      localStorage.setItem(spotlightStorageKey, JSON.stringify(payload))
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [spotlightHydrated, spotlightStorageKey, user?.id, videoTitle, thumbnailText, category, contentType, status, errorMsg, result])
 
   const canUse = canUseFeature(localUserData, 'spotlight')
   const remaining = getRemainingUses(localUserData)

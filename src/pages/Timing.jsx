@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
@@ -9,6 +9,7 @@ import { formatNumber } from '../lib/format'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+const TIMING_STATE_VERSION = 'v1'
 
 async function fetchTopicData(topic, contentType) {
   const cacheKey = `timing_${topic}_${contentType}`
@@ -145,6 +146,23 @@ function DataGuide() {
           </div>
         ))}
       </div>
+      <div className="timing-calc-guide" role="note" aria-label="업로드·조회수 비교 계산기 읽는 법">
+        <div className="timing-calc-guide-title">업로드·조회수 비교 계산기 읽는 법</div>
+        <div className="timing-calc-guide-grid">
+          <div className="timing-calc-guide-item">
+            <strong>업로드 비율</strong>
+            <span>`1.00x`보다 크면 경쟁 영상이 더 많고, 작으면 상대적으로 덜 올라온 주제예요.</span>
+          </div>
+          <div className="timing-calc-guide-item">
+            <strong>조회수 비율</strong>
+            <span>`1.00x`보다 크면 기준 키워드보다 주목도가 높고, 작으면 상대적으로 약해요.</span>
+          </div>
+          <div className="timing-calc-guide-item">
+            <strong>반응 밀도</strong>
+            <span>조회수 대비 업로드 밀도예요. `1.00x`보다 크면 공급 대비 반응 효율이 높은 편입니다.</span>
+          </div>
+        </div>
+      </div>
       <p className="timing-guide-disclaimer">
         조회수는 상위 20개 영상 기준으로, 실제 해당 주제의 평균과 다를 수 있습니다.
         업로드 수도 YouTube API의 추정치예요.
@@ -234,8 +252,15 @@ function RelationCalculator({ results, baseId, onChangeBase }) {
 const DOT_COLORS = ['#0F766E', '#EA580C', '#0369A1', '#16A34A', '#B45309', '#334155']
 
 function ScatterPlot({ results }) {
-  const W = 420, H = 290
-  const PAD = { top: 32, right: 110, bottom: 48, left: 56 }
+  const longestTopicLength = Math.max(...results.map(r => r.topic.length), 1)
+  const W = Math.min(980, Math.max(420, 420 + (results.length - 2) * 52 + Math.max(0, longestTopicLength - 8) * 10))
+  const H = Math.min(560, Math.max(290, 290 + Math.max(0, results.length - 4) * 16))
+  const PAD = {
+    top: 32,
+    right: Math.min(230, Math.max(120, 120 + Math.max(0, longestTopicLength - 8) * 5)),
+    bottom: 48,
+    left: 56,
+  }
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
 
@@ -248,10 +273,12 @@ function ScatterPlot({ results }) {
 
   const maxX = Math.max(...points.map(p => p.x), 1)
   const maxY = Math.max(...points.map(p => p.y), 1)
+  const xDomainMax = maxX * 1.08
+  const yDomainMax = maxY * 1.08
 
   const toSVG = (x, y) => ({
-    px: PAD.left + (x / maxX) * plotW,
-    py: PAD.top + (1 - y / maxY) * plotH,
+    px: PAD.left + (x / xDomainMax) * plotW,
+    py: PAD.top + (1 - y / yDomainMax) * plotH,
   })
 
   const midX = PAD.left + plotW / 2
@@ -266,7 +293,7 @@ function ScatterPlot({ results }) {
       <div className="timing-scatter-wrap">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          style={{ width: '100%', maxWidth: W, display: 'block' }}
+          style={{ width: '100%', maxWidth: W, minWidth: W, display: 'block' }}
           aria-label="키워드 업로드 수 및 평균 조회수 포지셔닝 맵"
           role="img"
         >
@@ -314,13 +341,15 @@ function ScatterPlot({ results }) {
             const { px, py } = toSVG(p.x, p.y)
             const color = DOT_COLORS[i % DOT_COLORS.length]
             const label = p.topic.length > 9 ? p.topic.slice(0, 8) + '…' : p.topic
+            const putLeft = px > W - PAD.right - 56
             return (
               <g key={p.id}>
                 <circle cx={px} cy={py} r={9} fill={color} opacity={0.9} />
                 <circle cx={px} cy={py} r={9} fill="none" stroke="var(--timing-map-dot-ring)" strokeWidth="1.5" opacity={0.7} />
                 <text
-                  x={px + 14}
+                  x={putLeft ? px - 14 : px + 14}
                   y={py + 4}
+                  textAnchor={putLeft ? 'end' : 'start'}
                   fontSize="12"
                   fill="var(--timing-map-point-label)"
                   stroke="var(--timing-map-point-label-stroke)"
@@ -459,7 +488,7 @@ function RecentVideos({ result }) {
 // ─── 메인 페이지 ──────────────────────────────────────────────────────────────
 
 export default function Timing() {
-  const { userData } = useAuth()
+  const { user, userData } = useAuth()
 
   const [topic, setTopic] = useState('')
   const [contentType, setContentType] = useState('롱폼')
@@ -468,11 +497,57 @@ export default function Timing() {
   const [errorMsg, setErrorMsg] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [calcBaseId, setCalcBaseId] = useState(null)
+  const timingStorageKey = useMemo(
+    () => `momento_timing_state_${TIMING_STATE_VERSION}_${user?.id || 'guest'}`,
+    [user?.id]
+  )
+  const [timingHydrated, setTimingHydrated] = useState(false)
 
   const userDataLoading = userData === null
   const canUse = canUseFeature(userData, 'timing')
 
   const selectedResult = results.find(r => r.id === selectedId) || results[results.length - 1] || null
+
+  useEffect(() => {
+    if (!user?.id) return
+    try {
+      const raw = localStorage.getItem(timingStorageKey)
+      if (!raw) {
+        setTimingHydrated(true)
+        return
+      }
+      const saved = JSON.parse(raw)
+      const savedResults = Array.isArray(saved.results) ? saved.results : []
+      const selectedExists = savedResults.some(r => r.id === saved.selectedId)
+      const calcBaseExists = savedResults.some(r => r.id === saved.calcBaseId)
+
+      setTopic(typeof saved.topic === 'string' ? saved.topic : '')
+      setContentType(saved.contentType === '숏폼' ? '숏폼' : '롱폼')
+      setResults(savedResults)
+      setSelectedId(selectedExists ? saved.selectedId : (savedResults[savedResults.length - 1]?.id ?? null))
+      setCalcBaseId(calcBaseExists ? saved.calcBaseId : (savedResults[0]?.id ?? null))
+    } catch {
+      // ignore invalid persisted state
+    } finally {
+      setTimingHydrated(true)
+    }
+  }, [timingStorageKey, user?.id])
+
+  useEffect(() => {
+    if (!timingHydrated || !user?.id || loadingTopic) return
+    const payload = {
+      topic,
+      contentType,
+      results,
+      selectedId,
+      calcBaseId,
+    }
+    try {
+      localStorage.setItem(timingStorageKey, JSON.stringify(payload))
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [timingHydrated, timingStorageKey, user?.id, topic, contentType, results, selectedId, calcBaseId, loadingTopic])
 
   const handleAdd = async () => {
     const t = topic.trim()

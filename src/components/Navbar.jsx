@@ -30,7 +30,7 @@ export default function Navbar() {
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
-              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '○' : '●'}</span>
+              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '◆' : '◇'}</span>
             </button>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function Navbar() {
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
-              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '○' : '●'}</span>
+              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '◆' : '◇'}</span>
             </button>
             <Link to="/pricing" className="btn btn-ghost btn-sm">← 요금제로 돌아가기</Link>
           </div>
@@ -85,7 +85,7 @@ export default function Navbar() {
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
             >
-              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '○' : '●'}</span>
+              <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '◆' : '◇'}</span>
             </button>
             <Link to="/mypage" className="btn btn-ghost btn-sm">마이페이지</Link>
             <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>로그아웃</button>
@@ -114,7 +114,7 @@ export default function Navbar() {
             onClick={toggle}
             aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
           >
-            <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '○' : '●'}</span>
+            <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '◆' : '◇'}</span>
           </button>
           <Link to="/auth"              className="btn btn-ghost btn-sm">로그인</Link>
           <Link to="/auth?mode=signup"  className="btn btn-primary btn-sm">무료로 시작하기</Link>
