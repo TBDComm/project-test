@@ -1,5 +1,5 @@
 // Cloudflare Pages Functions middleware
-// 1) Normalize legacy routes/files that can bring back old UI (style.css, *.html, main.js).
+// 1) Normalize legacy routes/files that can bring back old UI (*.html, main.js).
 // 2) Force SPA routes to always serve the latest index.html.
 // 3) Force no-store on document-like responses.
 export async function onRequest(context) {
@@ -21,18 +21,7 @@ export async function onRequest(context) {
     return Response.redirect(new URL(LEGACY_HTML_REDIRECTS[pathname], url.origin).toString(), 301)
   }
 
-  // If an old shell still asks for these legacy files, neutralize them.
-  if (pathname === '/style.css') {
-    return new Response('/* legacy style disabled */', {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/css; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        Pragma: 'no-cache',
-        Expires: '0',
-      },
-    })
-  }
+  // If an old shell still asks for this legacy file, neutralize it.
   if (pathname === '/main.js') {
     return new Response('// legacy main disabled', {
       status: 200,
