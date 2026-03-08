@@ -284,22 +284,61 @@ export default function Spotlight() {
   )
 }
 
+// 구조 유형별 설명
+const STRUCTURE_DESC = {
+  '질문형':       '시청자가 "왜?", "어떻게?"를 떠올리게 만드는 구조예요',
+  '숫자·리스트형': '숫자가 들어간 제목은 구체적이어서 클릭률이 높아요',
+  '감탄·강조형':  '강한 단어로 시청자의 감정을 바로 자극하는 구조예요',
+  '정보·가이드형': '검색 유입에 유리하고 내용을 명확히 전달하는 구조예요',
+  '비교·선택형':  '선택 고민이 있는 시청자에게 어필하는 구조예요',
+  '일반형':       '클릭을 끌어당기는 뚜렷한 구조가 없어요',
+}
+const STRUCTURE_TIP = {
+  '일반형': '숫자("5가지"), 질문("왜?"), 강조어("실화", "레전드")를 넣어보세요',
+}
+
+// 감정 트리거별 설명
+const EMOTION_DESC = {
+  '궁금증 유발형': '숨겨진 정보·비밀을 암시해 클릭을 끌어당기는 분위기예요',
+  '경각심형':     '위험·주의 경고로 강한 주목을 끄는 분위기예요',
+  '공감·감성형':  '시청자의 감정과 공감대를 자극하는 분위기예요',
+  '기대·흥미형':  '놀라움과 기대감으로 클릭을 유도하는 분위기예요',
+  '일반형':       '감정적 자극 요소가 뚜렷하지 않아요',
+}
+const EMOTION_TIP = {
+  '일반형': '"왜", "비밀", "충격", "실제로" 같은 단어로 궁금증을 유발해보세요',
+}
+
 function SpotlightResult({ result }) {
   const { analysis: a, myTitle, myThumb, categoryId } = result
   const categoryName = CATEGORY_LABELS[categoryId] || categoryId
 
   const myTitleLen = myTitle.length
   const diff = myTitleLen - a.titleLengthAvg
-  const titleDiffNote = diff === 0
-    ? '인기 영상 평균과 길이가 같아요'
-    : diff > 0 ? `인기 영상보다 ${diff}자 더 길어요`
-    : `인기 영상보다 ${Math.abs(diff)}자 더 짧아요`
+  const absDiff = Math.abs(diff)
+
+  const titleNote = diff === 0
+    ? '인기 영상 평균과 딱 맞는 길이예요'
+    : diff > 10  ? `평균보다 ${diff}자 더 길어요 — 핵심 키워드 중심으로 줄여보세요`
+    : diff > 0   ? `평균보다 ${diff}자 더 길어요`
+    : diff < -8  ? `평균보다 ${absDiff}자 더 짧아요 — 키워드를 조금 더 구체화해보세요`
+    : `평균보다 ${absDiff}자 더 짧아요`
 
   const myStructure = detectTitleStructure(myTitle)
   const myEmotion = detectEmotionTrigger(myTitle)
   const timingStr = a.topTimings.length ? a.topTimings.join(', ') : '데이터 없음'
   const topStructPct = pct(a.structureCounts[a.topStructure] || 0, a.total)
   const topEmotPct = pct(a.emotionCounts[a.topEmotion] || 0, a.total)
+
+  const structureMatch = myStructure === a.topStructure
+  const structureNote = structureMatch
+    ? `인기 영상과 같은 구조예요`
+    : `인기 영상 ${topStructPct}%가 '${a.topStructure}'인데, 내 영상은 '${myStructure}'예요`
+
+  const emotionMatch = myEmotion === a.topEmotion
+  const emotionNote = emotionMatch
+    ? `인기 영상과 같은 분위기예요`
+    : `인기 영상 ${topEmotPct}%가 '${a.topEmotion}'인데, 내 영상은 '${myEmotion}'예요`
 
   const now = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date())
 
@@ -318,19 +357,21 @@ function SpotlightResult({ result }) {
           <div className="table-col-head col-mine">내 영상</div>
         </div>
 
+        {/* 제목 길이 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">제목 길이</div>
             <div className="cell-metric-value">평균 {a.titleLengthAvg}자</div>
-            <div className="cell-metric-sub">분포 범위: {a.titleLengthRange} · 주요 구간: {a.titleLengthPct70}</div>
+            <div className="cell-metric-sub">분포 {a.titleLengthRange} · 주요 구간 {a.titleLengthPct70}</div>
           </div>
           <div className="table-cell">
             <div className="cell-metric-name">제목 길이</div>
             <div className="cell-metric-value">{myTitleLen}자</div>
-            <div className="cell-metric-sub">{titleDiffNote}</div>
+            <div className={`cell-metric-sub${diff === 0 ? ' match' : ''}`}>{titleNote}</div>
           </div>
         </div>
 
+        {/* 제목 구조 유형 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">제목 구조 유형</div>
@@ -340,12 +381,17 @@ function SpotlightResult({ result }) {
           <div className="table-cell">
             <div className="cell-metric-name">제목 구조 유형</div>
             <div className="cell-metric-value">{myStructure}</div>
-            <div className="cell-metric-sub">
-              {myStructure === a.topStructure ? '지금 인기 영상들과 같은 유형이에요' : '지금 인기 영상들과 다른 유형이에요'}
+            <div className="cell-metric-sub">{STRUCTURE_DESC[myStructure]}</div>
+            <div className={`cell-metric-sub${structureMatch ? ' match' : ' mismatch'}`} style={{ marginTop: 4 }}>
+              {structureMatch ? '✓ ' : ''}{structureNote}
             </div>
+            {STRUCTURE_TIP[myStructure] && (
+              <div className="cell-metric-tip">→ {STRUCTURE_TIP[myStructure]}</div>
+            )}
           </div>
         </div>
 
+        {/* 감정 트리거 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">감정 트리거</div>
@@ -355,12 +401,17 @@ function SpotlightResult({ result }) {
           <div className="table-cell">
             <div className="cell-metric-name">감정 트리거</div>
             <div className="cell-metric-value">{myEmotion}</div>
-            <div className="cell-metric-sub">
-              {myEmotion === a.topEmotion ? '지금 인기 영상들과 같은 분위기예요' : '지금 인기 영상들과 다른 분위기예요'}
+            <div className="cell-metric-sub">{EMOTION_DESC[myEmotion]}</div>
+            <div className={`cell-metric-sub${emotionMatch ? ' match' : ' mismatch'}`} style={{ marginTop: 4 }}>
+              {emotionMatch ? '✓ ' : ''}{emotionNote}
             </div>
+            {EMOTION_TIP[myEmotion] && (
+              <div className="cell-metric-tip">→ {EMOTION_TIP[myEmotion]}</div>
+            )}
           </div>
         </div>
 
+        {/* 썸네일 텍스트 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">썸네일 텍스트</div>
@@ -373,26 +424,30 @@ function SpotlightResult({ result }) {
               <>
                 <div className="cell-metric-value">{myThumb.length}자</div>
                 <div className="cell-metric-sub">"{myThumb.slice(0, 20)}{myThumb.length > 20 ? '…' : ''}"</div>
+                {myThumb.length > 15 && (
+                  <div className="cell-metric-tip">→ 인기 영상 평균(9자)보다 길어요. 더 짧게 압축해보세요</div>
+                )}
               </>
             ) : (
               <>
                 <div className="cell-metric-value">미입력</div>
-                <div className="cell-metric-sub">썸네일 텍스트 없음</div>
+                <div className="cell-metric-sub">썸네일 텍스트를 입력하면 비교할 수 있어요</div>
               </>
             )}
           </div>
         </div>
 
+        {/* 업로드 시간대 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">업로드 집중 시간대</div>
             <div className="cell-metric-value">{timingStr}</div>
-            <div className="cell-metric-sub">인기 영상 {a.total}개의 주요 업로드 시간대예요</div>
+            <div className="cell-metric-sub">인기 영상 {a.total}개 기준</div>
           </div>
           <div className="table-cell">
             <div className="cell-metric-name">업로드 요일·시간</div>
             <div className="cell-metric-value">—</div>
-            <div className="cell-metric-sub">영상 업로드 시간 미입력</div>
+            <div className="cell-metric-sub">다음 영상 업로드 시 참고해보세요</div>
           </div>
         </div>
       </div>

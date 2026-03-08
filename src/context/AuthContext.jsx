@@ -10,26 +10,38 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // onAuthStateChange가 INITIAL_SESSION 이벤트로 초기 세션도 처리
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user)
-        try {
-          const data = await getUserData(session.user.id)
-          setUserData(data)
-        } catch (e) {
-          console.error('getUserData 실패:', e)
-          // 에러 시 기본값 사용 (무한 로딩 방지)
-          setUserData({ plan: 'free', monthlyUsage: 0, usageMonth: null, subscriptionEnd: null })
-        }
-      } else {
-        setUser(null)
-        setUserData(null)
+    let mounted = true
+
+    const applySession = async (sessionUser) => {
+      if (!sessionUser) {
+        if (mounted) { setUser(null); setUserData(null) }
+        return
       }
-      setLoading(false)
+      if (mounted) setUser(sessionUser)
+      try {
+        const data = await getUserData(sessionUser.id)
+        if (mounted) setUserData(data)
+      } catch {
+        if (mounted) setUserData({ plan: 'free', monthlyUsage: 0, usageMonth: null, subscriptionEnd: null })
+      }
+    }
+
+    // getSession으로 초기 세션을 신뢰성 있게 처리 (무한 로딩 방지)
+    supabase.auth.getSession()
+      .then(async ({ data: { session } }) => {
+        await applySession(session?.user ?? null)
+      })
+      .catch(() => {})
+      .finally(() => { if (mounted) setLoading(false) })
+
+    // 이후 로그인·로그아웃·토큰 갱신 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'INITIAL_SESSION') return // getSession이 처리
+      if (!mounted) return
+      await applySession(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => { mounted = false; subscription.unsubscribe() }
   }, [])
 
   return (
