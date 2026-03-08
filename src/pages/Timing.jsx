@@ -258,43 +258,54 @@ function ScatterPlot({ results }) {
   const midY = PAD.top + plotH / 2
 
   return (
-    <div className="timing-section-card" style={{ marginBottom: 16 }}>
+    <div className="timing-section-card timing-scatter-card" style={{ marginBottom: 16 }}>
       <div className="timing-section-title">키워드 포지셔닝 맵</div>
       <p className="timing-section-note" style={{ marginBottom: 12, marginTop: 0 }}>
         각 키워드의 업로드 수(가로)와 평균 조회수(세로)를 기준으로 나타낸 참고 지도예요.
       </p>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="timing-scatter-wrap">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           style={{ width: '100%', maxWidth: W, display: 'block' }}
           aria-label="키워드 업로드 수 및 평균 조회수 포지셔닝 맵"
           role="img"
         >
+          <rect
+            x={PAD.left}
+            y={PAD.top}
+            width={plotW}
+            height={plotH}
+            fill="var(--timing-map-bg)"
+            stroke="var(--timing-map-border)"
+            strokeWidth="1"
+            rx="10"
+          />
+
           {/* 사분면 배경 */}
-          <rect x={PAD.left} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="rgba(79,70,229,.05)" />
-          <rect x={midX} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="rgba(79,70,229,.03)" />
-          <rect x={PAD.left} y={midY} width={plotW / 2} height={plotH / 2} fill="rgba(0,0,0,.02)" />
-          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="rgba(0,0,0,.02)" />
+          <rect x={PAD.left} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="var(--timing-map-q2)" />
+          <rect x={midX} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="var(--timing-map-q1)" />
+          <rect x={PAD.left} y={midY} width={plotW / 2} height={plotH / 2} fill="var(--timing-map-q3)" />
+          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="var(--timing-map-q4)" />
 
           {/* 사분면 레이블 */}
-          <text x={PAD.left + 6} y={PAD.top + 14} fontSize="9" fill="rgba(79,70,229,.6)" fontFamily="inherit">업로드↓ · 조회수↑</text>
-          <text x={midX + 6} y={PAD.top + 14} fontSize="9" fill="rgba(79,70,229,.6)" fontFamily="inherit">업로드↑ · 조회수↑</text>
-          <text x={PAD.left + 6} y={H - PAD.bottom - 6} fontSize="9" fill="rgba(0,0,0,.3)" fontFamily="inherit">업로드↓ · 조회수↓</text>
-          <text x={midX + 6} y={H - PAD.bottom - 6} fontSize="9" fill="rgba(0,0,0,.3)" fontFamily="inherit">업로드↑ · 조회수↓</text>
+          <text x={PAD.left + 6} y={PAD.top + 14} fontSize="9" fill="var(--timing-map-label-strong)" fontFamily="inherit">업로드↓ · 조회수↑</text>
+          <text x={midX + 6} y={PAD.top + 14} fontSize="9" fill="var(--timing-map-label-strong)" fontFamily="inherit">업로드↑ · 조회수↑</text>
+          <text x={PAD.left + 6} y={H - PAD.bottom - 6} fontSize="9" fill="var(--timing-map-label)" fontFamily="inherit">업로드↓ · 조회수↓</text>
+          <text x={midX + 6} y={H - PAD.bottom - 6} fontSize="9" fill="var(--timing-map-label)" fontFamily="inherit">업로드↑ · 조회수↓</text>
 
           {/* 축선 */}
-          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1.5" />
-          <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1.5" />
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom} stroke="var(--timing-map-axis)" strokeWidth="1.5" />
+          <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke="var(--timing-map-axis)" strokeWidth="1.5" />
 
           {/* 중간선 */}
-          <line x1={midX} y1={PAD.top} x2={midX} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
-          <line x1={PAD.left} y1={midY} x2={W - PAD.right} y2={midY} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
+          <line x1={midX} y1={PAD.top} x2={midX} y2={H - PAD.bottom} stroke="var(--timing-map-midline)" strokeWidth="1" strokeDasharray="4,3" />
+          <line x1={PAD.left} y1={midY} x2={W - PAD.right} y2={midY} stroke="var(--timing-map-midline)" strokeWidth="1" strokeDasharray="4,3" />
 
           {/* 축 레이블 */}
-          <text x={PAD.left + plotW / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--text-3)" fontFamily="inherit">업로드 수 많음 →</text>
+          <text x={PAD.left + plotW / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--timing-map-label)" fontFamily="inherit">업로드 수 많음 →</text>
           <text
             x={14} y={PAD.top + plotH / 2}
-            textAnchor="middle" fontSize="11" fill="var(--text-3)" fontFamily="inherit"
+            textAnchor="middle" fontSize="11" fill="var(--timing-map-label)" fontFamily="inherit"
             transform={`rotate(-90, 14, ${PAD.top + plotH / 2})`}
           >평균 조회수 높음 ↑</text>
 
@@ -305,9 +316,21 @@ function ScatterPlot({ results }) {
             const label = p.topic.length > 9 ? p.topic.slice(0, 8) + '…' : p.topic
             return (
               <g key={p.id}>
-                <circle cx={px} cy={py} r={9} fill={color} opacity={0.85} />
-                <circle cx={px} cy={py} r={9} fill="none" stroke="white" strokeWidth="1.5" opacity={0.4} />
-                <text x={px + 14} y={py + 4} fontSize="12" fill="var(--text-1)" fontFamily="inherit" fontWeight="600">{label}</text>
+                <circle cx={px} cy={py} r={9} fill={color} opacity={0.9} />
+                <circle cx={px} cy={py} r={9} fill="none" stroke="var(--timing-map-dot-ring)" strokeWidth="1.5" opacity={0.7} />
+                <text
+                  x={px + 14}
+                  y={py + 4}
+                  fontSize="12"
+                  fill="var(--timing-map-point-label)"
+                  stroke="var(--timing-map-point-label-stroke)"
+                  strokeWidth="3"
+                  paintOrder="stroke"
+                  fontFamily="inherit"
+                  fontWeight="700"
+                >
+                  {label}
+                </text>
               </g>
             )
           })}
@@ -630,12 +653,12 @@ export default function Timing() {
                       onChangeBase={setCalcBaseId}
                     />
                     <DataGuide />
+                    {results.length >= 2 && <ScatterPlot results={results} />}
                     <DetailTabs results={results} selectedId={selectedId} onSelect={setSelectedId} />
 
                     {selectedResult && (
                       <>
                         <DayChart result={selectedResult} />
-                        {results.length >= 2 && <ScatterPlot results={results} />}
                         <RecentVideos result={selectedResult} />
                       </>
                     )}

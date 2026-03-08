@@ -23,6 +23,32 @@
   --accent-subtle: rgba(79, 70, 229, 0.08);
   --accent-border: rgba(79, 70, 229, 0.18);
 
+  /* 비교/도표 대비 */
+  --compare-spot-head-bg: rgba(79, 70, 229, 0.14);
+  --compare-mine-head-bg: #EEF2FF;
+  --compare-spot-bg: rgba(79, 70, 229, 0.08);
+  --compare-mine-bg: #F8FAFF;
+  --timing-compare-bg: #F9FAFD;
+  --timing-calc-head-bg: #EEF2FA;
+  --timing-calc-active-bg: rgba(79, 70, 229, 0.12);
+  --timing-section-bg: #FAFBFF;
+  --timing-guide-bg: #F6F8FF;
+
+  /* 포지셔닝 맵 */
+  --timing-map-bg: #FFFFFF;
+  --timing-map-border: #CBD5E1;
+  --timing-map-q1: rgba(79, 70, 229, 0.12);
+  --timing-map-q2: rgba(79, 70, 229, 0.08);
+  --timing-map-q3: rgba(15, 23, 42, 0.06);
+  --timing-map-q4: rgba(15, 23, 42, 0.04);
+  --timing-map-axis: #64748B;
+  --timing-map-midline: #94A3B8;
+  --timing-map-label-strong: #312E81;
+  --timing-map-label: #475569;
+  --timing-map-point-label: #0F172A;
+  --timing-map-point-label-stroke: rgba(255,255,255,0.88);
+  --timing-map-dot-ring: rgba(255,255,255,0.9);
+
   /* 텍스트 */
   --text-1: #111827;
   --text-2: #6B7280;
@@ -71,6 +97,30 @@
   --shadow-md: 0 4px 16px rgba(0,0,0,0.40), 0 2px 4px rgba(0,0,0,0.25);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.50), 0 4px 8px rgba(0,0,0,0.30);
   --shadow-btn: 0 2px 8px rgba(79,70,229,0.45);
+
+  --compare-spot-head-bg: rgba(129, 140, 248, 0.28);
+  --compare-mine-head-bg: rgba(148, 163, 184, 0.24);
+  --compare-spot-bg: rgba(129, 140, 248, 0.18);
+  --compare-mine-bg: rgba(30, 41, 59, 0.42);
+  --timing-compare-bg: rgba(30, 41, 59, 0.36);
+  --timing-calc-head-bg: rgba(51, 65, 85, 0.5);
+  --timing-calc-active-bg: rgba(129, 140, 248, 0.18);
+  --timing-section-bg: rgba(30, 41, 59, 0.34);
+  --timing-guide-bg: rgba(30, 41, 59, 0.42);
+
+  --timing-map-bg: #0F172A;
+  --timing-map-border: rgba(148, 163, 184, 0.55);
+  --timing-map-q1: rgba(129, 140, 248, 0.3);
+  --timing-map-q2: rgba(129, 140, 248, 0.22);
+  --timing-map-q3: rgba(51, 65, 85, 0.34);
+  --timing-map-q4: rgba(51, 65, 85, 0.28);
+  --timing-map-axis: #CBD5E1;
+  --timing-map-midline: rgba(203, 213, 225, 0.75);
+  --timing-map-label-strong: #E2E8F0;
+  --timing-map-label: #CBD5E1;
+  --timing-map-point-label: #F8FAFC;
+  --timing-map-point-label-stroke: rgba(15, 23, 42, 0.95);
+  --timing-map-dot-ring: rgba(15, 23, 42, 0.95);
 }
 
 /* 다크 모드 네비게이션 배경 */
@@ -1209,17 +1259,17 @@ h1, h2, h3, h4 {
 
 /* 비교 테이블 */
 .compare-table {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--compare-mine-bg);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 }
 
 .compare-table-header {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .table-col-head {
@@ -1229,30 +1279,34 @@ h1, h2, h3, h4 {
 }
 
 .table-col-head.col-spotlight {
-  background: var(--accent-subtle);
-  color: var(--accent);
-  border-right: 1px solid var(--border);
+  background: var(--compare-spot-head-bg);
+  color: var(--text-1);
+  border-right: 1px solid var(--border-strong);
   display: flex; align-items: center; gap: 8px;
 }
 
 .table-col-head.col-mine {
-  color: var(--text-2);
+  background: var(--compare-mine-head-bg);
+  color: var(--text-1);
   display: flex; align-items: center; gap: 8px;
 }
 
 .table-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .table-row:last-child { border-bottom: none; }
 
-.table-cell { padding: 20px 24px; }
+.table-cell {
+  padding: 20px 24px;
+  background: var(--compare-mine-bg);
+}
 
 .table-cell.cell-spotlight {
-  background: rgba(79,70,229,.02);
-  border-right: 1px solid var(--border);
+  background: var(--compare-spot-bg);
+  border-right: 1px solid var(--border-strong);
 }
 
 .cell-metric-name {
@@ -1465,8 +1519,8 @@ h1, h2, h3, h4 {
 }
 
 .timing-compare-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--timing-compare-bg);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   box-shadow: var(--shadow-sm);
@@ -1504,8 +1558,8 @@ h1, h2, h3, h4 {
 }
 
 .timing-calc-card {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--timing-compare-bg);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: 16px 18px;
@@ -1566,13 +1620,13 @@ h1, h2, h3, h4 {
 }
 
 .timing-calc-row-head {
-  background: var(--bg-1);
+  background: var(--timing-calc-head-bg);
   color: var(--text-2);
   font-weight: 700;
 }
 
 .timing-calc-row.active {
-  background: var(--accent-subtle);
+  background: var(--timing-calc-active-bg);
 }
 
 .timing-calc-footnote {
@@ -1802,8 +1856,8 @@ h1, h2, h3, h4 {
 /* 요일 분포 */
 .timing-section-card {
   padding: 20px 22px;
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--timing-section-bg);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   margin-bottom: 16px;
@@ -1925,10 +1979,14 @@ h1, h2, h3, h4 {
 /* 데이터 해석 가이드 */
 .timing-guide {
   padding: 20px 22px;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: var(--timing-guide-bg);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   margin-bottom: 16px;
+}
+
+.timing-scatter-wrap {
+  overflow-x: auto;
 }
 
 .timing-guide-header {
