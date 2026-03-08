@@ -29,7 +29,10 @@
       <a href="/pricing.html"   class="nav-link active">요금제</a>
     </div>
     <div class="nav-actions">
-      <a href="/auth.html" class="btn btn-secondary btn-sm" id="login-btn">로그인</a>
+      <button class="theme-toggle" id="theme-toggle" aria-label="다크 모드로 전환" onclick="toggleTheme()">
+        <span class="theme-icon" aria-hidden="true">●</span>
+      </button>
+      <a href="/auth.html" class="btn btn-secondary btn-sm hidden" id="login-btn">로그인</a>
       <a href="/dashboard.html" class="btn btn-ghost btn-sm hidden" id="dashboard-btn">대시보드</a>
     </div>
   </div>
@@ -230,6 +233,16 @@
   </div>
 </footer>
 
+<script>
+(function () {
+  var theme = document.documentElement.getAttribute('data-theme') || 'light';
+  var icon = document.querySelector('.theme-icon');
+  var btn = document.getElementById('theme-toggle');
+  if (icon) icon.textContent = theme === 'dark' ? '○' : '●';
+  if (btn) btn.setAttribute('aria-label', theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+})();
+</script>
+
 <script type="module">
 import { auth } from './firebase-config.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -243,6 +256,8 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('logo-link').href = '/dashboard.html';
     document.getElementById('free-btn').href = '/dashboard.html';
     document.getElementById('free-btn').textContent = '대시보드로 이동';
+  } else {
+    document.getElementById('login-btn').classList.remove('hidden');
   }
 });
 

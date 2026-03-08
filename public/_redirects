@@ -1,0 +1,8 @@
+/auth.html /auth 301
+/dashboard.html /dashboard 301
+/spotlight.html /spotlight 301
+/timing.html /timing 301
+/pricing.html /pricing 301
+/mypage.html /mypage 301
+/payment.html /payment 301
+/* /index.html 200

@@ -25,6 +25,9 @@
       <a href="/pricing.html"   class="nav-link"         data-page="pricing">요금제</a>
     </div>
     <div class="nav-actions">
+      <button class="theme-toggle" id="theme-toggle" aria-label="다크 모드로 전환" onclick="toggleTheme()">
+        <span class="theme-icon" aria-hidden="true">●</span>
+      </button>
       <a href="/mypage.html" class="btn btn-ghost btn-sm">마이페이지</a>
       <button class="btn btn-secondary btn-sm" id="logout-btn">로그아웃</button>
     </div>
@@ -235,5 +238,14 @@
 </main>
 
 <script type="module" src="/spotlight.js"></script>
+<script>
+(function () {
+  var theme = document.documentElement.getAttribute('data-theme') || 'light';
+  var icon = document.querySelector('.theme-icon');
+  var btn = document.getElementById('theme-toggle');
+  if (icon) icon.textContent = theme === 'dark' ? '○' : '●';
+  if (btn) btn.setAttribute('aria-label', theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+})();
+</script>
 </body>
 </html>

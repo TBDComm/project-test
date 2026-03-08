@@ -25,7 +25,7 @@
       <a href="/pricing.html"   class="nav-link">요금제</a>
     </div>
     <div class="nav-actions">
-      <a href="/mypage.html" class="btn btn-ghost btn-sm" style="color: var(--purple-light);">마이페이지</a>
+      <a href="/mypage.html" class="btn btn-ghost btn-sm" style="color: var(--accent);">마이페이지</a>
       <button class="btn btn-secondary btn-sm" id="logout-btn">로그아웃</button>
     </div>
   </div>
@@ -286,16 +286,13 @@ function renderUsage(userData) {
 
 // 테마 토글
 function renderTheme() {
-  const t = localStorage.getItem('momento_theme') || 'dark';
+  const t = document.documentElement.getAttribute('data-theme') || 'light';
   document.getElementById('theme-label').textContent = t === 'dark' ? '다크 모드' : '라이트 모드';
 }
 
 document.getElementById('theme-toggle-btn')?.addEventListener('click', () => {
-  const current = localStorage.getItem('momento_theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('momento_theme', next);
-  document.documentElement.setAttribute('data-theme', next);
-  document.getElementById('theme-label').textContent = next === 'dark' ? '다크 모드' : '라이트 모드';
+  toggleTheme();
+  renderTheme();
 });
 
 // 해지 버튼
