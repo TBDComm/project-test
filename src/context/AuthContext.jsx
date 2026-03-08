@@ -10,26 +10,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 초기 세션 확인
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user)
-        const data = await getUserData(session.user.id)
-        setUserData(data)
-      }
-      setLoading(false)
-    })
-
-    // 인증 상태 변화 구독
+    // onAuthStateChange가 INITIAL_SESSION 이벤트로 초기 세션도 처리
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         setUser(session.user)
-        const data = await getUserData(session.user.id)
-        setUserData(data)
+        try {
+          const data = await getUserData(session.user.id)
+          setUserData(data)
+        } catch (e) {
+          console.error('getUserData 실패:', e)
+          // 에러 시 기본값 사용 (무한 로딩 방지)
+          setUserData({ plan: 'free', monthlyUsage: 0, usageMonth: null, subscriptionEnd: null })
+        }
       } else {
         setUser(null)
         setUserData(null)
       }
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
