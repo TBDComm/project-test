@@ -5,4 +5,11 @@
 /pricing.html /pricing 301
 /mypage.html /mypage 301
 /payment.html /payment 301
+/auth /index.html 200
+/dashboard /index.html 200
+/spotlight /index.html 200
+/timing /index.html 200
+/pricing /index.html 200
+/mypage /index.html 200
+/payment /index.html 200
 /* /index.html 200

@@ -1,5 +1,32 @@
-/*
+/index.html
   Cache-Control: no-cache, no-store, must-revalidate
+
+/dashboard
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/spotlight
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/timing
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pricing
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/mypage
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/payment
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/auth
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/theme-init.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*
+  Cache-Control: no-cache, must-revalidate
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
