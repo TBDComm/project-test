@@ -83,9 +83,9 @@ export default function Index() {
                 myValue: '정보·가이드형', mySub: '숫자·리스트 없는 제목이에요',
               },
               {
-                label: '감정 트리거',
-                spValue: '궁금증 유발형 52%', spSub: '공감·감성형 28% · 일반형 20%',
-                myValue: '일반형', mySub: '특별한 감정 자극 없는 제목이에요',
+                label: '감정 분위기',
+                spValue: '궁금증 유발형 52%', spSub: '공감·감성형 28% · 기타 20%',
+                myValue: '감정 자극 없음', mySub: '클릭을 끌어당기는 감정적 요소가 없는 제목이에요',
               },
               {
                 label: '업로드 집중 시간대',

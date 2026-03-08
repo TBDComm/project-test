@@ -1252,10 +1252,169 @@ h1, h2, h3, h4 {
 .metric-bar { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
 .metric-bar-item { display: flex; align-items: center; gap: 8px; }
-.metric-bar-label { width: 60px; color: var(--text-2); flex-shrink: 0; font-size: 12px; }
+.metric-bar-label { min-width: 76px; color: var(--text-2); flex-shrink: 0; font-size: 12px; }
 .metric-bar-track { flex: 1; height: 5px; background: var(--bg-2); border-radius: var(--radius-full); overflow: hidden; }
 .metric-bar-fill  { height: 100%; background: var(--accent); border-radius: var(--radius-full); }
 .metric-bar-pct   { width: 36px; text-align: right; font-size: 12px; color: var(--text-2); }
+
+/* 콘텐츠 유형 토글 */
+.content-type-toggle {
+  display: flex;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 3px;
+}
+
+.content-type-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: calc(var(--radius-md) - 3px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition), box-shadow var(--transition);
+  touch-action: manipulation;
+}
+
+.content-type-btn.active {
+  background: var(--card);
+  color: var(--text-1);
+  box-shadow: var(--shadow-sm);
+}
+
+.content-type-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.content-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+/* 제목 길이 히스토그램 */
+.len-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 64px;
+  margin-top: 10px;
+}
+
+.len-histo-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+}
+
+.len-histo-marker-row {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.len-histo-marker {
+  font-size: 10px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.len-histo-bar-track {
+  flex: 1;
+  width: 100%;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.len-histo-bar-fill {
+  width: 100%;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+  transition: height 0.35s ease;
+  min-height: 0;
+}
+
+.len-histo-bar-fill.me {
+  background: var(--accent);
+}
+
+.len-histo-label {
+  font-size: 9px;
+  color: var(--text-3);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.len-histo-label.me {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 요일 분포 (Spotlight 내 compact 버전) */
+.day-bars-compact {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 50px;
+  margin: 8px 0;
+}
+
+.day-bar-compact-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  height: 100%;
+}
+
+.day-bar-compact-track {
+  flex: 1;
+  width: 100%;
+  background: var(--bg-2);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.day-bar-compact-fill {
+  width: 100%;
+  background: var(--border);
+  border-radius: 2px;
+  transition: height 0.35s ease;
+  min-height: 0;
+}
+
+.day-bar-compact-fill.top {
+  background: var(--accent);
+}
+
+.day-bar-compact-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.day-bar-compact-label.top {
+  color: var(--accent);
+}
 
 /* 업그레이드 유도 */
 .upgrade-prompt {
@@ -1813,5 +1972,6 @@ h1, h2, h3, h4 {
   }
   .fade-in-up { animation: none; opacity: 1; transform: none; }
   .spinner { animation: none; border-top-color: var(--accent); }
-  .gauge-fill, .usage-bar-fill, .timing-day-bar-fill { transition: none; }
+  .gauge-fill, .usage-bar-fill, .timing-day-bar-fill,
+  .len-histo-bar-fill, .day-bar-compact-fill { transition: none; }
 }

@@ -4,7 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import { canUseFeature, getRemainingUses } from '../lib/plan'
 import { incrementUsage } from '../lib/user'
-import { detectTitleStructure, detectEmotionTrigger, getCached, setCache } from '../lib/youtube'
+import {
+  detectTitleStructure, detectEmotionTrigger,
+  getCached, setCache, isLongForm,
+  STRUCTURE_DISPLAY, STRUCTURE_DESC, STRUCTURE_TIP,
+  EMOTION_DISPLAY, EMOTION_DESC, EMOTION_TIP,
+} from '../lib/youtube'
 
 const CATEGORY_LABELS = {
   '22': '브이로그', '20': '게임', '27': '교육',
@@ -25,32 +30,66 @@ const CATEGORIES = [
   { value: '17', label: '스포츠' },
 ]
 
-async function fetchTrendingVideos(categoryId) {
-  const cacheKey = `spotlight_${categoryId}`
+const LENGTH_BUCKETS = [
+  { label: '~10자', min: 0, max: 10 },
+  { label: '11~15자', min: 11, max: 15 },
+  { label: '16~20자', min: 16, max: 20 },
+  { label: '21~25자', min: 21, max: 25 },
+  { label: '26~30자', min: 26, max: 30 },
+  { label: '31자+', min: 31, max: Infinity },
+]
+
+async function fetchTrendingVideos(categoryId, contentType) {
+  const cacheKey = `spotlight_${categoryId}_${contentType}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
-  const url = `/api/youtube?_ep=videos&part=snippet,statistics&chart=mostPopular&regionCode=KR&videoCategoryId=${categoryId}&maxResults=20`
-  const res = await fetch(url)
-  const data = await res.json()
+  let videos
 
-  if (data.error) throw new Error(data.error.message || '데이터를 불러오지 못했습니다.')
+  if (contentType === '숏폼') {
+    const url = `/api/youtube?_ep=search&part=snippet&regionCode=KR&type=video&videoCategoryId=${categoryId}&videoDuration=short&order=viewCount&maxResults=20`
+    const res = await fetch(url)
+    const data = await res.json()
+    if (data.error) throw new Error(data.error.message || '데이터를 불러오지 못했습니다.')
 
-  if (!data.items?.length) {
-    const fallbackKey = 'spotlight_all'
-    const cachedFallback = getCached(fallbackKey)
-    if (cachedFallback) return cachedFallback
+    if (!data.items?.length) {
+      // 카테고리 제한 없이 재시도
+      const url2 = `/api/youtube?_ep=search&part=snippet&regionCode=KR&type=video&videoDuration=short&order=viewCount&maxResults=20`
+      const res2 = await fetch(url2)
+      const data2 = await res2.json()
+      if (!data2.items?.length) throw new Error('숏폼 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+      const ids2 = data2.items.map(i => i.id.videoId).join(',')
+      const det2 = await fetch(`/api/youtube?_ep=videos&part=snippet,statistics&id=${encodeURIComponent(ids2)}`)
+      const detData2 = await det2.json()
+      videos = detData2.items || []
+    } else {
+      const ids = data.items.map(i => i.id.videoId).join(',')
+      const det = await fetch(`/api/youtube?_ep=videos&part=snippet,statistics&id=${encodeURIComponent(ids)}`)
+      const detData = await det.json()
+      videos = detData.items || []
+    }
+  } else {
+    // 롱폼: mostPopular 차트, contentDetails로 필터링
+    const url = `/api/youtube?_ep=videos&part=snippet,statistics,contentDetails&chart=mostPopular&regionCode=KR&videoCategoryId=${categoryId}&maxResults=50`
+    const res = await fetch(url)
+    const data = await res.json()
+    if (data.error) throw new Error(data.error.message || '데이터를 불러오지 못했습니다.')
 
-    const url2 = `/api/youtube?_ep=videos&part=snippet,statistics&chart=mostPopular&regionCode=KR&maxResults=20`
-    const res2 = await fetch(url2)
-    const data2 = await res2.json()
-    if (!data2.items?.length) throw new Error('데이터를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.')
-    setCache(fallbackKey, data2.items)
-    return data2.items
+    const all = data.items || []
+    const long = all.filter(v => isLongForm(v.contentDetails?.duration))
+    videos = (long.length >= 5 ? long : all).slice(0, 20)
+
+    if (!videos.length) {
+      const url2 = `/api/youtube?_ep=videos&part=snippet,statistics,contentDetails&chart=mostPopular&regionCode=KR&maxResults=20`
+      const res2 = await fetch(url2)
+      const data2 = await res2.json()
+      if (!data2.items?.length) throw new Error('데이터를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.')
+      videos = data2.items
+    }
   }
 
-  setCache(cacheKey, data.items)
-  return data.items
+  setCache(cacheKey, videos)
+  return videos
 }
 
 function analyzeVideos(videos) {
@@ -58,7 +97,7 @@ function analyzeVideos(videos) {
   const publishedAts = videos.map(v => v.snippet?.publishedAt || '')
 
   const lengths = titles.map(t => t.length).filter(l => l > 0)
-  const avgLen = Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length)
+  const avgLen = Math.round(lengths.reduce((a, b) => a + b, 0) / (lengths.length || 1))
   const minLen = Math.min(...lengths)
   const maxLen = Math.max(...lengths)
 
@@ -75,18 +114,21 @@ function analyzeVideos(videos) {
   })
 
   const dayHourCounts = {}
+  const dayDist = {}
   publishedAts.forEach(iso => {
     if (!iso) return
     const d = new Date(iso)
     const kstHour = (d.getUTCHours() + 9) % 24
-    const dayName = DAYS[d.getDay()]
+    const dayIndex = d.getDay()
+    const dayName = DAYS[dayIndex]
     const key = `${dayName}요일 ${kstHour}시`
     dayHourCounts[key] = (dayHourCounts[key] || 0) + 1
+    dayDist[dayIndex] = (dayDist[dayIndex] || 0) + 1
   })
 
   const topTimings = Object.entries(dayHourCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 2)
+    .slice(0, 3)
     .map(([k]) => k)
 
   const topByCount = (counts) =>
@@ -95,12 +137,13 @@ function analyzeVideos(videos) {
   return {
     titleLengthAvg: avgLen,
     titleLengthRange: `${minLen}~${maxLen}자`,
-    titleLengthPct70: `${Math.round(avgLen * 0.85)}~${Math.round(avgLen * 1.15)}자`,
+    lengths,
     structureCounts,
     emotionCounts,
     topStructure: topByCount(structureCounts),
     topEmotion: topByCount(emotionCounts),
     topTimings,
+    dayDist,
     total: videos.length,
   }
 }
@@ -109,19 +152,72 @@ function pct(count, total) {
   return Math.round((count / total) * 100)
 }
 
-function BarChart({ counts, total, topN = 3 }) {
+function BarChart({ counts, total, topN = 3, displayMap = {} }) {
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, topN)
   return (
     <div className="metric-bar">
-      {sorted.map(([label, count]) => {
+      {sorted.map(([key, count]) => {
         const p = pct(count, total)
         return (
-          <div className="metric-bar-item" key={label}>
-            <span className="metric-bar-label">{label}</span>
+          <div className="metric-bar-item" key={key}>
+            <span className="metric-bar-label">{displayMap[key] || key}</span>
             <div className="metric-bar-track">
               <div className="metric-bar-fill" style={{ width: `${p}%` }} />
             </div>
             <span className="metric-bar-pct">{p}%</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function LengthHistogram({ lengths, myLength }) {
+  const counts = LENGTH_BUCKETS.map(b => lengths.filter(l => l >= b.min && l <= b.max).length)
+  const maxCount = Math.max(...counts, 1)
+  const myBucketIdx = LENGTH_BUCKETS.findIndex(b => myLength >= b.min && myLength <= b.max)
+
+  return (
+    <div className="len-histogram" role="img" aria-label="제목 길이 분포 그래프">
+      {LENGTH_BUCKETS.map((b, i) => {
+        const fillPct = Math.round((counts[i] / maxCount) * 100)
+        const isMe = i === myBucketIdx
+        return (
+          <div key={b.label} className="len-histo-col">
+            <div className="len-histo-marker-row">
+              {isMe && <span className="len-histo-marker" aria-label="내 영상 위치">▼</span>}
+            </div>
+            <div className="len-histo-bar-track">
+              <div
+                className={`len-histo-bar-fill${isMe ? ' me' : ''}`}
+                style={{ height: `${fillPct}%` }}
+              />
+            </div>
+            <div className={`len-histo-label${isMe ? ' me' : ''}`}>{b.label}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function DayBars({ dayDist }) {
+  const dayMax = Math.max(...Object.values(dayDist), 1)
+  return (
+    <div className="day-bars-compact" role="img" aria-label="요일별 업로드 분포">
+      {DAYS.map((day, i) => {
+        const count = dayDist[i] || 0
+        const fillPct = Math.round((count / dayMax) * 100)
+        const isTop = count === dayMax && count > 0
+        return (
+          <div key={day} className="day-bar-compact-item">
+            <div className="day-bar-compact-track">
+              <div
+                className={`day-bar-compact-fill${isTop ? ' top' : ''}`}
+                style={{ height: `${fillPct}%` }}
+              />
+            </div>
+            <div className={`day-bar-compact-label${isTop ? ' top' : ''}`}>{day}</div>
           </div>
         )
       })}
@@ -135,12 +231,12 @@ export default function Spotlight() {
   const [videoTitle, setVideoTitle] = useState('')
   const [thumbnailText, setThumbnailText] = useState('')
   const [category, setCategory] = useState('')
-  const [status, setStatus] = useState('empty') // empty | loading | result | error
+  const [contentType, setContentType] = useState('롱폼')
+  const [status, setStatus] = useState('empty')
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
   const [localUserData, setLocalUserData] = useState(userData)
 
-  // AuthContext의 userData가 백그라운드에서 로드되면 최초 1회 동기화
   useEffect(() => {
     if (userData !== null && localUserData === null) {
       setLocalUserData(userData)
@@ -163,7 +259,7 @@ export default function Spotlight() {
 
     setStatus('loading')
     try {
-      const videos = await fetchTrendingVideos(category)
+      const videos = await fetchTrendingVideos(category, contentType)
       const analysis = analyzeVideos(videos)
 
       if (!localUserData?.isAdmin && localUserData?.plan === 'free') {
@@ -173,7 +269,7 @@ export default function Spotlight() {
         if (setUserData) setUserData(updated)
       }
 
-      setResult({ analysis, myTitle: videoTitle.trim(), myThumb: thumbnailText.trim(), categoryId: category })
+      setResult({ analysis, myTitle: videoTitle.trim(), myThumb: thumbnailText.trim(), categoryId: category, contentType })
       setStatus('result')
     } catch (e) {
       setErrorMsg(e.message || '데이터를 가져오는 중 오류가 발생했습니다.')
@@ -248,6 +344,23 @@ export default function Spotlight() {
                   </select>
                 </div>
 
+                <div className="form-group">
+                  <span className="form-label" id="content-type-label">콘텐츠 유형</span>
+                  <div className="content-type-toggle" role="group" aria-labelledby="content-type-label">
+                    {['롱폼', '숏폼'].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        className={`content-type-btn${contentType === type ? ' active' : ''}`}
+                        onClick={() => setContentType(type)}
+                        aria-pressed={contentType === type}
+                      >
+                        {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <button
                   className="btn btn-primary btn-full" type="button"
                   style={{ padding: 13 }}
@@ -294,33 +407,8 @@ export default function Spotlight() {
   )
 }
 
-// 구조 유형별 설명
-const STRUCTURE_DESC = {
-  '질문형':       '시청자가 "왜?", "어떻게?"를 떠올리게 만드는 구조예요',
-  '숫자·리스트형': '숫자가 들어간 제목은 구체적이어서 클릭률이 높아요',
-  '감탄·강조형':  '강한 단어로 시청자의 감정을 바로 자극하는 구조예요',
-  '정보·가이드형': '검색 유입에 유리하고 내용을 명확히 전달하는 구조예요',
-  '비교·선택형':  '선택 고민이 있는 시청자에게 어필하는 구조예요',
-  '일반형':       '클릭을 끌어당기는 뚜렷한 구조가 없어요',
-}
-const STRUCTURE_TIP = {
-  '일반형': '숫자("5가지"), 질문("왜?"), 강조어("실화", "레전드")를 넣어보세요',
-}
-
-// 감정 트리거별 설명
-const EMOTION_DESC = {
-  '궁금증 유발형': '숨겨진 정보·비밀을 암시해 클릭을 끌어당기는 분위기예요',
-  '경각심형':     '위험·주의 경고로 강한 주목을 끄는 분위기예요',
-  '공감·감성형':  '시청자의 감정과 공감대를 자극하는 분위기예요',
-  '기대·흥미형':  '놀라움과 기대감으로 클릭을 유도하는 분위기예요',
-  '일반형':       '감정적 자극 요소가 뚜렷하지 않아요',
-}
-const EMOTION_TIP = {
-  '일반형': '"왜", "비밀", "충격", "실제로" 같은 단어로 궁금증을 유발해보세요',
-}
-
 function SpotlightResult({ result }) {
-  const { analysis: a, myTitle, myThumb, categoryId } = result
+  const { analysis: a, myTitle, myThumb, categoryId, contentType } = result
   const categoryName = CATEGORY_LABELS[categoryId] || categoryId
 
   const myTitleLen = myTitle.length
@@ -338,21 +426,20 @@ function SpotlightResult({ result }) {
   const myStructure = useMemo(() => detectTitleStructure(myTitle), [myTitle])
   const myEmotion = useMemo(() => detectEmotionTrigger(myTitle), [myTitle])
 
-  const timingStr = a.topTimings.length ? a.topTimings.join(', ') : '데이터 없음'
   const topStructPct = pct(a.structureCounts[a.topStructure] || 0, a.total)
   const topEmotPct = pct(a.emotionCounts[a.topEmotion] || 0, a.total)
 
   const structureMatch = myStructure === a.topStructure
   const structureNote = structureMatch
-    ? `인기 영상과 같은 구조예요`
-    : `인기 영상 ${topStructPct}%가 '${a.topStructure}'인데, 내 영상은 '${myStructure}'예요`
+    ? '인기 영상들과 같은 제목 구조예요'
+    : `인기 영상 ${topStructPct}%가 사용하는 구조와 다른 방향이에요`
 
   const emotionMatch = myEmotion === a.topEmotion
   const emotionNote = emotionMatch
-    ? `인기 영상과 같은 분위기예요`
-    : `인기 영상 ${topEmotPct}%가 '${a.topEmotion}'인데, 내 영상은 '${myEmotion}'예요`
+    ? '인기 영상들과 같은 분위기예요'
+    : `인기 영상 ${topEmotPct}%가 사용하는 분위기와 다른 방향이에요`
 
-  const now = useMemo(() => 
+  const now = useMemo(() =>
     new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date()),
     []
   )
@@ -360,8 +447,9 @@ function SpotlightResult({ result }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
-          {categoryName} · 상위 20개 영상 기준
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{categoryName} · 상위 20개 기준</span>
+          <span className="content-type-badge">{contentType}</span>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-3)' }}>분석 시각: {now}</div>
       </div>
@@ -377,7 +465,8 @@ function SpotlightResult({ result }) {
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">제목 길이</div>
             <div className="cell-metric-value">평균 {a.titleLengthAvg}자</div>
-            <div className="cell-metric-sub">분포 {a.titleLengthRange} · 주요 구간 {a.titleLengthPct70}</div>
+            <div className="cell-metric-sub">분포 {a.titleLengthRange}</div>
+            <LengthHistogram lengths={a.lengths} myLength={myTitleLen} />
           </div>
           <div className="table-cell">
             <div className="cell-metric-name">제목 길이</div>
@@ -386,19 +475,19 @@ function SpotlightResult({ result }) {
           </div>
         </div>
 
-        {/* 제목 구조 유형 */}
+        {/* 제목 구조 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
-            <div className="cell-metric-name">제목 구조 유형</div>
-            <div className="cell-metric-value">{a.topStructure} {topStructPct}%</div>
-            <BarChart counts={a.structureCounts} total={a.total} topN={3} />
+            <div className="cell-metric-name">제목 구조</div>
+            <div className="cell-metric-value">{STRUCTURE_DISPLAY[a.topStructure]} {topStructPct}%</div>
+            <BarChart counts={a.structureCounts} total={a.total} topN={3} displayMap={STRUCTURE_DISPLAY} />
           </div>
           <div className="table-cell">
-            <div className="cell-metric-name">제목 구조 유형</div>
-            <div className="cell-metric-value">{myStructure}</div>
+            <div className="cell-metric-name">제목 구조</div>
+            <div className="cell-metric-value">{STRUCTURE_DISPLAY[myStructure]}</div>
             <div className="cell-metric-sub">{STRUCTURE_DESC[myStructure]}</div>
-            <div className={`cell-metric-sub${structureMatch ? ' match' : ' mismatch'}`} style={{ marginTop: 4 }}>
-              {structureMatch ? '✓ ' : ''}{structureNote}
+            <div className={`cell-metric-sub${structureMatch ? ' match' : ''}`} style={{ marginTop: 6 }}>
+              {structureMatch ? '✓\u00A0' : ''}{structureNote}
             </div>
             {STRUCTURE_TIP[myStructure] && (
               <div className="cell-metric-tip">→ {STRUCTURE_TIP[myStructure]}</div>
@@ -406,19 +495,19 @@ function SpotlightResult({ result }) {
           </div>
         </div>
 
-        {/* 감정 트리거 */}
+        {/* 감정 분위기 */}
         <div className="table-row">
           <div className="table-cell cell-spotlight">
-            <div className="cell-metric-name">감정 트리거</div>
-            <div className="cell-metric-value">{a.topEmotion} {topEmotPct}%</div>
-            <BarChart counts={a.emotionCounts} total={a.total} topN={3} />
+            <div className="cell-metric-name">감정 분위기</div>
+            <div className="cell-metric-value">{EMOTION_DISPLAY[a.topEmotion]} {topEmotPct}%</div>
+            <BarChart counts={a.emotionCounts} total={a.total} topN={3} displayMap={EMOTION_DISPLAY} />
           </div>
           <div className="table-cell">
-            <div className="cell-metric-name">감정 트리거</div>
-            <div className="cell-metric-value">{myEmotion}</div>
+            <div className="cell-metric-name">감정 분위기</div>
+            <div className="cell-metric-value">{EMOTION_DISPLAY[myEmotion]}</div>
             <div className="cell-metric-sub">{EMOTION_DESC[myEmotion]}</div>
-            <div className={`cell-metric-sub${emotionMatch ? ' match' : ' mismatch'}`} style={{ marginTop: 4 }}>
-              {emotionMatch ? '✓ ' : ''}{emotionNote}
+            <div className={`cell-metric-sub${emotionMatch ? ' match' : ''}`} style={{ marginTop: 6 }}>
+              {emotionMatch ? '✓\u00A0' : ''}{emotionNote}
             </div>
             {EMOTION_TIP[myEmotion] && (
               <div className="cell-metric-tip">→ {EMOTION_TIP[myEmotion]}</div>
@@ -440,13 +529,13 @@ function SpotlightResult({ result }) {
                 <div className="cell-metric-value">{myThumb.length}자</div>
                 <div className="cell-metric-sub">"{myThumb.slice(0, 20)}{myThumb.length > 20 ? '…' : ''}"</div>
                 {myThumb.length > 15 && (
-                  <div className="cell-metric-tip">→ 인기 영상 평균(9자)보다 길어요. 더 짧게 압축해보세요</div>
+                  <div className="cell-metric-tip">→ 인기 영상 평균(9자)보다 길어요. 더 짧게 압축해보세요.</div>
                 )}
               </>
             ) : (
               <>
                 <div className="cell-metric-value">미입력</div>
-                <div className="cell-metric-sub">썸네일 텍스트를 입력하면 비교할 수 있어요</div>
+                <div className="cell-metric-sub">썸네일 텍스트를 입력하면 비교할 수 있어요.</div>
               </>
             )}
           </div>
@@ -456,13 +545,19 @@ function SpotlightResult({ result }) {
         <div className="table-row">
           <div className="table-cell cell-spotlight">
             <div className="cell-metric-name">업로드 집중 시간대</div>
-            <div className="cell-metric-value">{timingStr}</div>
-            <div className="cell-metric-sub">인기 영상 {a.total}개 기준</div>
+            {a.topTimings.length > 0 && (
+              <div className="cell-metric-value">{a.topTimings[0]}</div>
+            )}
+            {Object.keys(a.dayDist).length > 0 && <DayBars dayDist={a.dayDist} />}
+            {a.topTimings.length > 1 && (
+              <div className="cell-metric-sub">{a.topTimings.slice(1).join(' · ')} 순</div>
+            )}
+            <div className="cell-metric-sub" style={{ marginTop: 4, fontSize: 12 }}>KST 기준</div>
           </div>
           <div className="table-cell">
             <div className="cell-metric-name">업로드 요일·시간</div>
-            <div className="cell-metric-value">—</div>
-            <div className="cell-metric-sub">다음 영상 업로드 시 참고해보세요</div>
+            <div className="cell-metric-value" style={{ color: 'var(--text-2)' }}>—</div>
+            <div className="cell-metric-sub">왼쪽 인기 영상의 집중 시간대를 참고해서 다음 업로드 시 활용해보세요.</div>
           </div>
         </div>
       </div>

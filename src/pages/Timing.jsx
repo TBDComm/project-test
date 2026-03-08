@@ -11,13 +11,14 @@ const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
-async function fetchTopicData(topic) {
-  const cacheKey = `timing_${topic}`
+async function fetchTopicData(topic, contentType) {
+  const cacheKey = `timing_${topic}_${contentType}`
   const cached = getCached(cacheKey)
   if (cached) return cached
 
   const after30 = getDateBefore(30)
-  const url = `/api/youtube?_ep=search&part=snippet&regionCode=KR&type=video&q=${encodeURIComponent(topic)}&order=viewCount&maxResults=20&publishedAfter=${encodeURIComponent(after30)}`
+  const durationParam = contentType === '숏폼' ? '&videoDuration=short' : ''
+  const url = `/api/youtube?_ep=search&part=snippet&regionCode=KR&type=video&q=${encodeURIComponent(topic)}&order=viewCount&maxResults=20&publishedAfter=${encodeURIComponent(after30)}${durationParam}`
 
   const res = await fetch(url)
   const data = await res.json()
@@ -68,6 +69,7 @@ export default function Timing() {
   const { userData } = useAuth()
 
   const [topic, setTopic] = useState('')
+  const [contentType, setContentType] = useState('롱폼')
   const [status, setStatus] = useState('empty') // empty | loading | result | error
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
@@ -79,7 +81,7 @@ export default function Timing() {
     if (!topic.trim()) { alert('영상 주제를 입력해주세요.'); return }
     setStatus('loading')
     try {
-      const data = await fetchTopicData(topic.trim())
+      const data = await fetchTopicData(topic.trim(), contentType)
       setResult({ topic: topic.trim(), data })
       setStatus('result')
     } catch (e) {
@@ -136,6 +138,23 @@ export default function Timing() {
                     />
                     <span className="form-hint">주제를 한 단어 또는 짧은 문장으로 입력하세요.</span>
                   </div>
+                <div className="form-group">
+                  <span className="form-label" id="timing-content-type-label">콘텐츠 유형</span>
+                  <div className="content-type-toggle" role="group" aria-labelledby="timing-content-type-label">
+                    {['롱폼', '숏폼'].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        className={`content-type-btn${contentType === type ? ' active' : ''}`}
+                        onClick={() => setContentType(type)}
+                        aria-pressed={contentType === type}
+                      >
+                        {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                   <button
                     className="btn btn-primary btn-full" type="button"
                     style={{ padding: 13 }}
