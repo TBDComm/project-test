@@ -1,7 +1,8 @@
 // Cloudflare Pages Functions middleware
 // 1) Normalize legacy routes/files that can bring back old UI (*.html, main.js).
 // 2) Force SPA routes to always serve the latest index.html.
-// 3) Force no-store on document-like responses.
+// 3) Recover from stale hashed asset requests after deploys.
+// 4) Force no-store on document-like responses.
 export async function onRequest(context) {
   const { request } = context
   const url = new URL(request.url)
@@ -21,9 +22,9 @@ export async function onRequest(context) {
     return Response.redirect(new URL(LEGACY_HTML_REDIRECTS[pathname], url.origin).toString(), 301)
   }
 
-  // If an old shell still asks for this legacy file, neutralize it.
+  // If an old shell still asks for this legacy file, force a full reload to SPA entry.
   if (pathname === '/main.js') {
-    return new Response('// legacy main disabled', {
+    return new Response('window.location.replace(window.location.pathname.replace(/\\.html$/, "") || "/");', {
       status: 200,
       headers: {
         'Content-Type': 'application/javascript; charset=utf-8',
@@ -35,7 +36,16 @@ export async function onRequest(context) {
   }
 
   const hasFileExt = /\.[a-zA-Z0-9]+$/.test(pathname)
-  const response = await context.next()
+  let response = await context.next()
+
+  // Stale HTML can request old hashed bundle names after deployment.
+  // If that happens, redirect the request to the latest hashed asset.
+  if (pathname.startsWith('/assets/') && response.status === 404) {
+    const fallback = await resolveLatestAssetPath(url.origin, pathname)
+    if (fallback) {
+      return Response.redirect(new URL(fallback, url.origin).toString(), 302)
+    }
+  }
 
   // Keep hashed static assets cacheable for performance.
   if (pathname.startsWith('/assets/')) return response
@@ -60,4 +70,22 @@ export async function onRequest(context) {
     statusText: response.statusText,
     headers,
   })
+}
+
+async function resolveLatestAssetPath(origin, pathname) {
+  const ext = pathname.endsWith('.css') ? 'css' : pathname.endsWith('.js') ? 'js' : ''
+  if (!ext) return null
+
+  try {
+    const res = await fetch(`${origin}/index.html`, { headers: { Accept: 'text/html' } })
+    if (!res.ok) return null
+    const html = await res.text()
+    const pattern = ext === 'css'
+      ? /href="(\/assets\/index-[^"]+\.css)"/
+      : /src="(\/assets\/index-[^"]+\.js)"/
+    const match = html.match(pattern)
+    return match?.[1] || null
+  } catch {
+    return null
+  }
 }
