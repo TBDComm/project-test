@@ -9,6 +9,7 @@ import Timing   from './pages/Timing'
 import Pricing  from './pages/Pricing'
 import MyPage   from './pages/MyPage'
 import Payment  from './pages/Payment'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/timing"   element={<ProtectedRoute><Timing /></ProtectedRoute>} />
           <Route path="/mypage"   element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
           <Route path="/payment"  element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+          <Route path="*"         element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

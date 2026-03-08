@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -47,15 +47,11 @@ function FaqItem({ q, a }) {
 
 export default function Pricing() {
   const { user } = useAuth()
-  const navigate = useNavigate()
 
-  const handleSubscribe = (plan) => {
-    if (!user) {
-      navigate(`/auth?mode=signup&redirect=${encodeURIComponent('/pricing')}`)
-      return
-    }
-    navigate(`/payment?plan=${plan}`)
-  }
+  const subscribeHref = (plan) =>
+    user
+      ? `/payment?plan=${plan}`
+      : `/auth?mode=signup&redirect=${encodeURIComponent(`/payment?plan=${plan}`)}`
 
   return (
     <>
@@ -106,9 +102,9 @@ export default function Pricing() {
                   <li className="plan-feature-row"><i className="fi-check">✓</i> 업로드 시간대 패턴 비교</li>
                   <li className="plan-feature-row"><i className="fi-check">✓</i> 포화도 시장 현황 리포트</li>
                 </ul>
-                <button className="btn btn-primary btn-full" type="button" onClick={() => handleSubscribe('starter')}>
+                <Link className="btn btn-primary btn-full" to={subscribeHref('starter')}>
                   STARTER 구독하기
-                </button>
+                </Link>
               </div>
 
               {/* PRO */}
@@ -123,9 +119,9 @@ export default function Pricing() {
                   <li className="plan-feature-row"><i className="fi-check">✓</i> 월간 트렌드 요약 리포트</li>
                   <li className="plan-feature-row"><i className="fi-check">✓</i> 우선 고객 지원</li>
                 </ul>
-                <button className="btn btn-secondary btn-full" type="button" onClick={() => handleSubscribe('pro')}>
+                <Link className="btn btn-secondary btn-full" to={subscribeHref('pro')}>
                   PRO 구독하기
-                </button>
+                </Link>
               </div>
             </div>
 

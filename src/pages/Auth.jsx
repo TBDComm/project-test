@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -24,10 +24,16 @@ function authErrorMsg(message) {
   return '오류가 발생했습니다. 다시 시도해주세요.'
 }
 
+function normalizeRedirectPath(value) {
+  if (!value || typeof value !== 'string') return '/dashboard'
+  if (!value.startsWith('/') || value.startsWith('//')) return '/dashboard'
+  return value
+}
+
 export default function Auth() {
   const [searchParams] = useSearchParams()
   const mode = searchParams.get('mode')
-  const redirect = searchParams.get('redirect') || '/dashboard'
+  const redirect = normalizeRedirectPath(searchParams.get('redirect'))
   const [panel, setPanel] = useState(mode === 'signup' ? 'signup' : 'login')
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
@@ -38,6 +44,10 @@ export default function Auth() {
   const [signupSuccess, setSignupSuccess] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [signupLoading, setSignupLoading] = useState(false)
+  const loginEmailRef = useRef(null)
+  const loginPasswordRef = useRef(null)
+  const signupEmailRef = useRef(null)
+  const signupPasswordRef = useRef(null)
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -48,7 +58,16 @@ export default function Auth() {
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoginError('')
-    if (!loginEmail || !loginPassword) { setLoginError('이메일과 비밀번호를 모두 입력해주세요.'); return }
+    if (!loginEmail) {
+      setLoginError('이메일과 비밀번호를 모두 입력해주세요.')
+      loginEmailRef.current?.focus()
+      return
+    }
+    if (!loginPassword) {
+      setLoginError('이메일과 비밀번호를 모두 입력해주세요.')
+      loginPasswordRef.current?.focus()
+      return
+    }
     setLoginLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
     if (error) { setLoginError(authErrorMsg(error.message)); setLoginLoading(false) }
@@ -59,8 +78,21 @@ export default function Auth() {
     e.preventDefault()
     setSignupError('')
     setSignupSuccess(false)
-    if (!signupEmail || !signupPassword) { setSignupError('이메일과 비밀번호를 모두 입력해주세요.'); return }
-    if (signupPassword.length < 8) { setSignupError('비밀번호는 8자 이상이어야 합니다.'); return }
+    if (!signupEmail) {
+      setSignupError('이메일과 비밀번호를 모두 입력해주세요.')
+      signupEmailRef.current?.focus()
+      return
+    }
+    if (!signupPassword) {
+      setSignupError('이메일과 비밀번호를 모두 입력해주세요.')
+      signupPasswordRef.current?.focus()
+      return
+    }
+    if (signupPassword.length < 8) {
+      setSignupError('비밀번호는 8자 이상이어야 합니다.')
+      signupPasswordRef.current?.focus()
+      return
+    }
     setSignupLoading(true)
     const { data, error } = await supabase.auth.signUp({ email: signupEmail, password: signupPassword })
     if (error) {
@@ -120,6 +152,7 @@ export default function Auth() {
                   <input
                     type="email" id="login-email" name="email"
                     className="form-input" placeholder="이메일 주소…"
+                    ref={loginEmailRef}
                     value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
                     autoComplete="email" spellCheck="false" required
                   />
@@ -129,6 +162,7 @@ export default function Auth() {
                   <input
                     type="password" id="login-password" name="password"
                     className="form-input" placeholder="비밀번호…"
+                    ref={loginPasswordRef}
                     value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
                     autoComplete="current-password" required
                   />
@@ -169,6 +203,7 @@ export default function Auth() {
                   <input
                     type="email" id="signup-email" name="email"
                     className="form-input" placeholder="이메일 주소…"
+                    ref={signupEmailRef}
                     value={signupEmail} onChange={e => setSignupEmail(e.target.value)}
                     autoComplete="email" spellCheck="false" required
                   />
@@ -178,6 +213,7 @@ export default function Auth() {
                   <input
                     type="password" id="signup-password" name="new-password"
                     className="form-input" placeholder="8자 이상…"
+                    ref={signupPasswordRef}
                     value={signupPassword} onChange={e => setSignupPassword(e.target.value)}
                     autoComplete="new-password" required
                   />

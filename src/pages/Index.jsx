@@ -35,9 +35,10 @@ export default function Index() {
     <>
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
       <Navbar />
+      <main id="main-content">
 
       {/* 히어로 */}
-      <section className="hero" id="main-content">
+      <section className="hero">
         <div className="container">
           <div className="hero-eyebrow">
             <span aria-hidden="true">✦</span>
@@ -298,6 +299,7 @@ export default function Index() {
           <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-3)' }}>월 5회 무료 · 신용카드 불필요</p>
         </div>
       </section>
+      </main>
 
       <Footer />
     </>
