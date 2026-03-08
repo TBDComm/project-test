@@ -231,7 +231,7 @@ function RelationCalculator({ results, baseId, onChangeBase }) {
 
 // ─── 포지셔닝 맵 (스캐터 플롯) ───────────────────────────────────────────────
 
-const DOT_COLORS = ['#4F46E5', '#7C3AED', '#DB2777', '#059669', '#D97706', '#0284C7']
+const DOT_COLORS = ['#0F766E', '#EA580C', '#0369A1', '#16A34A', '#B45309', '#334155']
 
 function ScatterPlot({ results }) {
   const W = 420, H = 290
