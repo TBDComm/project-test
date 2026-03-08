@@ -318,6 +318,7 @@ export default function Spotlight() {
   const isDirty = status !== 'empty' || videoTitle !== '' || thumbnailText !== '' || category !== ''
 
   const handleClearAll = () => {
+    if (!window.confirm('입력 내용과 분석 결과를 모두 초기화할까요?')) return
     setVideoTitle('')
     setThumbnailText('')
     setCategory('')

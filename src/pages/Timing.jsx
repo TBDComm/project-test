@@ -642,6 +642,7 @@ export default function Timing() {
   }
 
   const handleClearAll = () => {
+    if (!window.confirm('분석된 키워드를 모두 지울까요?')) return
     setResults([])
     setSelectedId(null)
     setCalcBaseId(null)
