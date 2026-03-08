@@ -1872,6 +1872,10 @@ h1, h2, h3, h4 {
   margin-bottom: 16px;
 }
 
+.timing-scatter-card {
+  overflow: hidden;
+}
+
 .timing-section-title {
   font-size: 13px;
   font-weight: 700;

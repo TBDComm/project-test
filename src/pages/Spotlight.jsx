@@ -40,6 +40,34 @@ const LENGTH_BUCKETS = [
 ]
 const SPOTLIGHT_STATE_VERSION = 'v1'
 
+function persistSpotlightState(storageKey, payload) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(payload))
+    return
+  } catch {
+    // fall through
+  }
+
+  const lightPayload = {
+    ...payload,
+    result: payload.result
+      ? {
+          myTitle: payload.result.myTitle || '',
+          myThumb: payload.result.myThumb || '',
+          categoryId: payload.result.categoryId || '',
+          contentType: payload.result.contentType === '숏폼' ? '숏폼' : '롱폼',
+        }
+      : null,
+    status: payload.result ? 'result' : payload.status,
+  }
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(lightPayload))
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
 async function fetchTrendingVideos(categoryId, contentType) {
   const cacheKey = `spotlight_${categoryId}_${contentType}`
   const cached = getCached(cacheKey)
@@ -262,9 +290,10 @@ export default function Spotlight() {
       setThumbnailText(typeof saved.thumbnailText === 'string' ? saved.thumbnailText : '')
       setCategory(typeof saved.category === 'string' ? saved.category : '')
       setContentType(saved.contentType === '숏폼' ? '숏폼' : '롱폼')
-      setResult(saved.result ?? null)
+      const hydratedResult = saved.result?.analysis ? saved.result : null
+      setResult(hydratedResult)
       setErrorMsg(typeof saved.errorMsg === 'string' ? saved.errorMsg : '')
-      setStatus(saved.result ? 'result' : (saved.status === 'error' ? 'error' : 'empty'))
+      setStatus(hydratedResult ? 'result' : (saved.status === 'error' ? 'error' : 'empty'))
     } catch {
       // ignore invalid persisted state
     } finally {
@@ -283,11 +312,7 @@ export default function Spotlight() {
       errorMsg,
       result,
     }
-    try {
-      localStorage.setItem(spotlightStorageKey, JSON.stringify(payload))
-    } catch {
-      // ignore storage quota errors
-    }
+    persistSpotlightState(spotlightStorageKey, payload)
   }, [spotlightHydrated, spotlightStorageKey, user?.id, videoTitle, thumbnailText, category, contentType, status, errorMsg, result])
 
   const canUse = canUseFeature(localUserData, 'spotlight')

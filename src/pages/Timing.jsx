@@ -10,6 +10,65 @@ import { formatNumber } from '../lib/format'
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 const TIMING_STATE_VERSION = 'v1'
+const MAX_PERSISTED_RESULTS = 8
+const MAX_PERSISTED_VIDEOS = 10
+
+function normalizeVideo(item) {
+  if (!item || typeof item !== 'object') return null
+  const rawViewCount = item.statistics?.viewCount ?? item.viewCount ?? 0
+  const viewCount = Number(rawViewCount)
+  return {
+    id: item.id || item.videoId || '',
+    title: item.snippet?.title || item.title || '제목 없음',
+    channel: item.snippet?.channelTitle || item.channel || '',
+    publishedAt: item.snippet?.publishedAt || item.publishedAt || null,
+    viewCount: Number.isFinite(viewCount) ? viewCount : 0,
+  }
+}
+
+function serializeResultForStorage(result) {
+  return {
+    id: result.id,
+    topic: result.topic,
+    contentType: result.contentType,
+    analysis: result.analysis,
+    data: {
+      totalResults: result.data?.totalResults || 0,
+      videos: Array.isArray(result.data?.videos) ? result.data.videos.slice(0, MAX_PERSISTED_VIDEOS) : [],
+    },
+  }
+}
+
+function sanitizeResult(raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.topic !== 'string') return null
+
+  const videosSource = Array.isArray(raw.data?.videos) ? raw.data.videos : []
+  const videos = videosSource.map(normalizeVideo).filter(Boolean)
+  const totalResults = Number(raw.analysis?.totalResults ?? raw.data?.totalResults ?? raw.totalResults ?? 0)
+  const analysis = analyzeData(videos, Number.isFinite(totalResults) ? totalResults : 0)
+
+  const id = Number(raw.id)
+  return {
+    id: Number.isFinite(id) ? id : Date.now(),
+    topic: raw.topic.trim(),
+    contentType: raw.contentType === '숏폼' ? '숏폼' : '롱폼',
+    data: { videos, totalResults: analysis.totalResults },
+    analysis,
+  }
+}
+
+function persistTimingState(storageKey, payload) {
+  let compactResults = [...payload.results]
+
+  while (compactResults.length > 0) {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ ...payload, results: compactResults }))
+      return
+    } catch {
+      compactResults = compactResults.slice(1)
+    }
+  }
+}
 
 async function fetchTopicData(topic, contentType) {
   const cacheKey = `timing_${topic}_${contentType}`
@@ -32,21 +91,22 @@ async function fetchTopicData(topic, contentType) {
   const detailData = await detailRes.json()
 
   const totalResults = data.pageInfo?.totalResults || 0
-  const result = { videos: detailData.items || [], totalResults }
+  const videos = (detailData.items || []).map(normalizeVideo).filter(Boolean)
+  const result = { videos, totalResults }
 
   setCache(cacheKey, result)
   return result
 }
 
 function analyzeData(videos, totalResults) {
-  const viewCounts = videos.map(v => Number(v.statistics?.viewCount || 0))
+  const viewCounts = videos.map(v => Number(v.viewCount || 0))
   const avgViews = Math.round(viewCounts.reduce((a, b) => a + b, 0) / (viewCounts.length || 1))
 
   const dayHourCounts = {}
   const dayDist = {}
 
   videos.forEach(v => {
-    const iso = v.snippet?.publishedAt
+    const iso = v.publishedAt
     if (!iso) return
     const d = new Date(iso)
     const kstHour = (d.getUTCHours() + 9) % 24
@@ -450,7 +510,7 @@ function DayChart({ result }) {
 
 function RecentVideos({ result }) {
   const topVideos = useMemo(() => [...result.data.videos]
-    .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
+    .sort((a, b) => Number(b.viewCount || 0) - Number(a.viewCount || 0))
     .slice(0, 10), [result.data.videos])
 
   return (
@@ -462,10 +522,10 @@ function RecentVideos({ result }) {
       {topVideos.length === 0 ? (
         <div className="empty-state"><div className="empty-title">영상 목록 없음</div></div>
       ) : topVideos.map((v, i) => {
-        const title = v.snippet?.title || '제목 없음'
-        const channel = v.snippet?.channelTitle || ''
-        const published = v.snippet?.publishedAt
-        const views = formatNumber(Number(v.statistics?.viewCount || 0))
+        const title = v.title || '제목 없음'
+        const channel = v.channel || ''
+        const published = v.publishedAt
+        const views = formatNumber(Number(v.viewCount || 0))
         const dateStr = published ? dateFormatter.format(new Date(published)) : ''
         return (
           <div className="video-item" key={v.id || i}>
@@ -517,7 +577,9 @@ export default function Timing() {
         return
       }
       const saved = JSON.parse(raw)
-      const savedResults = Array.isArray(saved.results) ? saved.results : []
+      const savedResults = Array.isArray(saved.results)
+        ? saved.results.map(sanitizeResult).filter(Boolean)
+        : []
       const selectedExists = savedResults.some(r => r.id === saved.selectedId)
       const calcBaseExists = savedResults.some(r => r.id === saved.calcBaseId)
 
@@ -535,18 +597,16 @@ export default function Timing() {
 
   useEffect(() => {
     if (!timingHydrated || !user?.id || loadingTopic) return
+
     const payload = {
       topic,
       contentType,
-      results,
+      results: results.slice(-MAX_PERSISTED_RESULTS).map(serializeResultForStorage),
       selectedId,
       calcBaseId,
     }
-    try {
-      localStorage.setItem(timingStorageKey, JSON.stringify(payload))
-    } catch {
-      // ignore storage quota errors
-    }
+
+    persistTimingState(timingStorageKey, payload)
   }, [timingHydrated, timingStorageKey, user?.id, topic, contentType, results, selectedId, calcBaseId, loadingTopic])
 
   const handleAdd = async () => {
