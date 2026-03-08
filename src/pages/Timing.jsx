@@ -641,6 +641,13 @@ export default function Timing() {
     })
   }
 
+  const handleClearAll = () => {
+    setResults([])
+    setSelectedId(null)
+    setCalcBaseId(null)
+    try { localStorage.removeItem(timingStorageKey) } catch { /* ignore */ }
+  }
+
   const handleKeyDown = (e) => { if (e.key === 'Enter') handleAdd() }
 
   return (
@@ -729,7 +736,18 @@ export default function Timing() {
 
                 {results.length > 0 && (
                   <div className="timing-keyword-list">
-                    <div className="timing-keyword-list-title">분석된 키워드 ({results.length})</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div className="timing-keyword-list-title" style={{ marginBottom: 0 }}>분석된 키워드 ({results.length})</div>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={handleClearAll}
+                        aria-label="분석된 키워드 전체 지우기"
+                        style={{ touchAction: 'manipulation', padding: '4px 10px', fontSize: 12 }}
+                      >
+                        전체 지우기
+                      </button>
+                    </div>
                     {results.map(r => (
                       <div
                         key={r.id}

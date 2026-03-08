@@ -315,6 +315,19 @@ export default function Spotlight() {
     persistSpotlightState(spotlightStorageKey, payload)
   }, [spotlightHydrated, spotlightStorageKey, user?.id, videoTitle, thumbnailText, category, contentType, status, errorMsg, result])
 
+  const isDirty = status !== 'empty' || videoTitle !== '' || thumbnailText !== '' || category !== ''
+
+  const handleClearAll = () => {
+    setVideoTitle('')
+    setThumbnailText('')
+    setCategory('')
+    setContentType('롱폼')
+    setStatus('empty')
+    setErrorMsg('')
+    setResult(null)
+    try { localStorage.removeItem(spotlightStorageKey) } catch { /* ignore */ }
+  }
+
   const canUse = canUseFeature(localUserData, 'spotlight')
   const remaining = getRemainingUses(localUserData)
 
@@ -377,7 +390,20 @@ export default function Spotlight() {
         ) : (
           <div className="spotlight-layout">
             <aside className="input-panel">
-              <h2 className="input-panel-title">내 영상 정보 입력</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <h2 className="input-panel-title" style={{ marginBottom: 0 }}>내 영상 정보 입력</h2>
+                {isDirty && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={handleClearAll}
+                    aria-label="입력 내용 및 분석 결과 전체 초기화"
+                    style={{ touchAction: 'manipulation', flexShrink: 0 }}
+                  >
+                    전체 초기화
+                  </button>
+                )}
+              </div>
               {usageNotice && <div className="usage-notice">{usageNotice}</div>}
 
               <div className="input-form">
