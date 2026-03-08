@@ -44,17 +44,18 @@ export async function getUserData(uid) {
 
 // Spotlight Compare 사용 1회 차감
 export async function incrementUsage(uid) {
+  // maybeSingle(): 행이 없으면 에러 대신 null을 반환 — .single()은 0행일 때 에러를 던짐
   const { data, error: selectError } = await supabase
     .from('users')
     .select('monthly_usage')
     .eq('id', uid)
-    .single()
+    .maybeSingle()
 
-  if (selectError) throw new Error('사용량 조회 실패: ' + selectError.message)
+  if (selectError) throw new Error('사용량 업데이트 실패: ' + selectError.message)
 
   const { error: updateError } = await supabase
     .from('users')
-    .update({ monthly_usage: (data?.monthly_usage || 0) + 1 })
+    .update({ monthly_usage: (data?.monthly_usage ?? 0) + 1 })
     .eq('id', uid)
 
   if (updateError) throw new Error('사용량 업데이트 실패: ' + updateError.message)

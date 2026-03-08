@@ -348,7 +348,12 @@ export default function Spotlight() {
       const analysis = analyzeVideos(videos)
 
       if (!localUserData?.isAdmin && localUserData?.plan === 'free') {
-        await incrementUsage(user.id)
+        // 사용량 기록 실패가 분석 결과 표시를 막지 않도록 별도 처리
+        try {
+          await incrementUsage(user.id)
+        } catch {
+          // 기록 실패 시에도 로컬 카운터는 증가 — 새로고침하면 DB 실제값으로 재조정됨
+        }
         const updated = { ...localUserData, monthlyUsage: (localUserData.monthlyUsage || 0) + 1 }
         setLocalUserData(updated)
         if (setUserData) setUserData(updated)
