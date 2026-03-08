@@ -73,6 +73,8 @@ export default function Timing() {
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
 
+  // userData가 아직 로드 중인 경우와 실제로 권한 없는 경우를 구분
+  const userDataLoading = userData === null
   const canUse = canUseFeature(userData, 'timing')
 
   const handleAnalyze = async () => {
@@ -97,7 +99,12 @@ export default function Timing() {
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
       <Navbar />
       <main className="app-main" id="main-content">
-        {!canUse ? (
+        {userDataLoading ? (
+          <div className="loading-overlay">
+            <div className="spinner" />
+            <span>잠시만 기다려주세요…</span>
+          </div>
+        ) : !canUse ? (
           <div style={{ paddingTop: 40 }}>
             <div className="upgrade-prompt">
               <div className="up-icon">◇</div>

@@ -12,33 +12,36 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true
 
-    const applySession = async (sessionUser) => {
-      if (!sessionUser) {
-        if (mounted) { setUser(null); setUserData(null) }
-        return
-      }
-      if (mounted) setUser(sessionUser)
-      try {
-        const data = await getUserData(sessionUser.id)
-        if (mounted) setUserData(data)
-      } catch {
-        if (mounted) setUserData({ plan: 'free', monthlyUsage: 0, usageMonth: null, subscriptionEnd: null })
-      }
+    const fetchUserData = (uid) => {
+      getUserData(uid)
+        .then(data => { if (mounted) setUserData(data) })
+        .catch(() => {
+          if (mounted) setUserData({ plan: 'free', monthlyUsage: 0, usageMonth: null, subscriptionEnd: null })
+        })
     }
 
-    // getSession으로 초기 세션을 신뢰성 있게 처리 (무한 로딩 방지)
+    // auth 상태(로그인 여부)를 확인하는 즉시 loading 해제 — getUserData를 기다리지 않음
     supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
-        await applySession(session?.user ?? null)
+      .then(({ data: { session } }) => {
+        if (!mounted) return
+        const sessionUser = session?.user ?? null
+        setUser(sessionUser)
+        setLoading(false)                          // ← 여기서 바로 해제
+        if (sessionUser) fetchUserData(sessionUser.id) // ← DB는 백그라운드에서
       })
-      .catch(() => {})
-      .finally(() => { if (mounted) setLoading(false) })
+      .catch(() => { if (mounted) setLoading(false) })
 
-    // 이후 로그인·로그아웃·토큰 갱신 감지
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // 로그인·로그아웃·토큰 갱신 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') return // getSession이 처리
       if (!mounted) return
-      await applySession(session?.user ?? null)
+      const sessionUser = session?.user ?? null
+      setUser(sessionUser)
+      if (!sessionUser) {
+        setUserData(null)
+      } else {
+        fetchUserData(sessionUser.id)
+      }
     })
 
     return () => { mounted = false; subscription.unsubscribe() }

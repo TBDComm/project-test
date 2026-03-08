@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
@@ -140,6 +140,13 @@ export default function Spotlight() {
   const [result, setResult] = useState(null)
   const [localUserData, setLocalUserData] = useState(userData)
 
+  // AuthContext의 userData가 백그라운드에서 로드되면 최초 1회 동기화
+  useEffect(() => {
+    if (userData !== null && localUserData === null) {
+      setLocalUserData(userData)
+    }
+  }, [userData, localUserData])
+
   const canUse = canUseFeature(localUserData, 'spotlight')
   const remaining = getRemainingUses(localUserData)
 
@@ -184,7 +191,12 @@ export default function Spotlight() {
           <p className="page-desc">지금 카테고리 상위 영상들의 패턴과 내 영상을 나란히 비교합니다.</p>
         </div>
 
-        {!canUse ? (
+        {localUserData === null ? (
+          <div className="loading-overlay">
+            <div className="spinner" />
+            <span>잠시만 기다려주세요…</span>
+          </div>
+        ) : !canUse ? (
           <div className="upgrade-prompt">
             <div className="up-icon">◇</div>
             <h2 className="up-title">이번 달 무료 횟수를 모두 사용했습니다</h2>
