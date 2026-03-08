@@ -1,12 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import {
-  canUseFeature, getRemainingUses, incrementUsage,
-  detectTitleStructure, detectEmotionTrigger,
-  getCached, setCache,
-} from '../lib/utils'
+import { canUseFeature, getRemainingUses } from '../lib/plan'
+import { incrementUsage } from '../lib/user'
+import { detectTitleStructure, detectEmotionTrigger, getCached, setCache } from '../lib/youtube'
 
 const CATEGORY_LABELS = {
   '22': '브이로그', '20': '게임', '27': '교육',
@@ -244,7 +242,7 @@ export default function Spotlight() {
                   onClick={handleAnalyze}
                   disabled={status === 'loading'}
                 >
-                  {status === 'loading' ? '분석 중…' : '비교 분석 시작'}
+                  {status === 'loading' ? '분석\u00A0중…' : '비교\u00A0분석\u00A0시작'}
                 </button>
               </div>
             </aside>
@@ -252,9 +250,9 @@ export default function Spotlight() {
             <section id="result-panel">
               {status === 'empty' && (
                 <div className="empty-state" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)' }}>
-                  <div className="empty-icon">✦</div>
-                  <div className="empty-title">분석 결과가 여기에 표시됩니다</div>
-                  <div className="empty-desc">왼쪽에 영상 정보를 입력하고 비교 분석을 시작하세요.</div>
+                  <div className="empty-icon" aria-hidden="true">✦</div>
+                  <div className="empty-title">분석{"\u00A0"}결과가{"\u00A0"}여기에{"\u00A0"}표시됩니다</div>
+                  <div className="empty-desc">왼쪽에{"\u00A0"}영상{"\u00A0"}정보를{"\u00A0"}입력하고 비교{"\u00A0"}분석을{"\u00A0"}시작하세요.</div>
                 </div>
               )}
 
@@ -317,15 +315,17 @@ function SpotlightResult({ result }) {
   const diff = myTitleLen - a.titleLengthAvg
   const absDiff = Math.abs(diff)
 
-  const titleNote = diff === 0
-    ? '인기 영상 평균과 딱 맞는 길이예요'
-    : diff > 10  ? `평균보다 ${diff}자 더 길어요 — 핵심 키워드 중심으로 줄여보세요`
-    : diff > 0   ? `평균보다 ${diff}자 더 길어요`
-    : diff < -8  ? `평균보다 ${absDiff}자 더 짧아요 — 키워드를 조금 더 구체화해보세요`
-    : `평균보다 ${absDiff}자 더 짧아요`
+  const titleNote = useMemo(() => {
+    if (diff === 0) return '인기 영상 평균과 딱 맞는 길이예요'
+    if (diff > 10)  return `평균보다 ${diff}자 더 길어요 — 핵심 키워드 중심으로 줄여보세요`
+    if (diff > 0)   return `평균보다 ${diff}자 더 길어요`
+    if (diff < -8)  return `평균보다 ${absDiff}자 더 짧아요 — 키워드를 조금 더 구체화해보세요`
+    return `평균보다 ${absDiff}자 더 짧아요`
+  }, [diff, absDiff])
 
-  const myStructure = detectTitleStructure(myTitle)
-  const myEmotion = detectEmotionTrigger(myTitle)
+  const myStructure = useMemo(() => detectTitleStructure(myTitle), [myTitle])
+  const myEmotion = useMemo(() => detectEmotionTrigger(myTitle), [myTitle])
+
   const timingStr = a.topTimings.length ? a.topTimings.join(', ') : '데이터 없음'
   const topStructPct = pct(a.structureCounts[a.topStructure] || 0, a.total)
   const topEmotPct = pct(a.emotionCounts[a.topEmotion] || 0, a.total)
@@ -340,7 +340,10 @@ function SpotlightResult({ result }) {
     ? `인기 영상과 같은 분위기예요`
     : `인기 영상 ${topEmotPct}%가 '${a.topEmotion}'인데, 내 영상은 '${myEmotion}'예요`
 
-  const now = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date())
+  const now = useMemo(() => 
+    new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date()),
+    []
+  )
 
   return (
     <div>

@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import { canUseFeature, getCached, setCache, getDateBefore, formatNumber } from '../lib/utils'
+import { canUseFeature } from '../lib/plan'
+import { getCached, setCache } from '../lib/youtube'
+import { getDateBefore } from '../lib/date'
+import { formatNumber } from '../lib/format'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -175,20 +178,23 @@ export default function Timing() {
 }
 
 function TimingResult({ topic, data }) {
-  const a = analyzeData(data.videos, data.totalResults)
+  const a = useMemo(() => analyzeData(data.videos, data.totalResults), [data.videos, data.totalResults])
 
-  const satLabel = { low: '낮음', medium: '보통', high: '높음' }[a.saturation]
-  const satDesc = {
+  const satLabel = useMemo(() => ({ low: '낮음', medium: '보통', high: '높음' }[a.saturation]), [a.saturation])
+  const satDesc = useMemo(() => ({
     low:    '이 주제를 다룬 최근 영상이 비교적 적습니다.',
     medium: '이 주제를 다룬 영상이 꾸준히 올라오고 있습니다.',
     high:   '이 주제를 다룬 영상이 매우 많이 올라오고 있습니다.',
-  }[a.saturation]
+  }[a.saturation]), [a.saturation])
 
-  const now = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date())
+  const now = useMemo(() => 
+    new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date()),
+    []
+  )
 
-  const topVideos = [...data.videos]
+  const topVideos = useMemo(() => [...data.videos]
     .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
-    .slice(0, 10)
+    .slice(0, 10), [data.videos])
 
   return (
     <div>

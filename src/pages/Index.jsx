@@ -6,8 +6,10 @@ import Footer from '../components/Footer'
 export default function Index() {
   const observerRef = useRef(null)
 
-  // 스크롤 애니메이션
+  // 스크롤 애니메이션 (동작 감소 선호 시 건너뜀)
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
     observerRef.current = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -42,16 +44,18 @@ export default function Index() {
             한국 유튜브 크리에이터 전용
           </div>
           <h1 className="hero-title">
-            지금 이 카테고리에서<br />
-            <span className="text-gradient">뜨는 영상들</span>은<br />
-            이런 패턴입니다
+            지금 이{"\u00A0"}카테고리에서<br />
+            <span className="text-gradient">뜨는{"\u00A0"}영상들</span>은<br />
+            이런{"\u00A0"}패턴입니다
           </h1>
           <p className="hero-sub">
-            조회수가 좋은 건지 나쁜 건지 모르겠다면, 기준이 없는 겁니다.<br />
-            MOMENTO는 지금 스포트된 상위 영상들과 내 영상을 나란히 보여줍니다.
+            조회수가 좋은{"\u00A0"}건지 나쁜{"\u00A0"}건지 모르겠다면, 기준이{"\u00A0"}없는{"\u00A0"}겁니다.<br />
+            MOMENTO는 지금 스포트된 상위{"\u00A0"}영상들과 내{"\u00A0"}영상을 나란히{"\u00A0"}보여줍니다.
           </p>
           <div className="hero-actions">
-            <Link to="/auth?mode=signup" className="btn btn-primary btn-lg">무료로 시작하기 →</Link>
+            <Link to="/auth?mode=signup" className="btn btn-primary btn-lg">
+              무료로 시작하기 <span aria-hidden="true">→</span>
+            </Link>
             <a href="#preview" className="btn btn-secondary btn-lg" onClick={(e) => handleSmoothScroll(e, 'preview')}>미리보기</a>
           </div>
           <p className="hero-note">신용카드 불필요 · 월 5회 무료</p>
@@ -209,7 +213,7 @@ export default function Index() {
             </div>
             <div className="feature-visual">
               <div className="feature-visual-header">
-                <span aria-hidden="true">◇</span> "다이어트" 주제 현황 분석
+                <span aria-hidden="true">◇</span> “다이어트” 주제 현황 분석
               </div>
               <div className="fv-saturation">
                 <div className="fv-sat-label">주제 포화도</div>
@@ -288,7 +292,9 @@ export default function Index() {
           <p className="section-desc" style={{ marginBottom: 40 }}>
             무료 플랜으로 바로 시작할 수 있습니다.
           </p>
-          <Link to="/auth?mode=signup" className="btn btn-primary btn-lg">무료로 시작하기 →</Link>
+          <Link to="/auth?mode=signup" className="btn btn-primary btn-lg">
+            무료로 시작하기 <span aria-hidden="true">→</span>
+          </Link>
           <p style={{ marginTop: 16, fontSize: 13, color: 'var(--text-3)' }}>월 5회 무료 · 신용카드 불필요</p>
         </div>
       </section>

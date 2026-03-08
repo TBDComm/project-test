@@ -340,6 +340,20 @@ h1, h2, h3, h4 {
 
 .btn-full { width: 100%; }
 
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-link:hover {
+  text-decoration: underline;
+}
+
 /* --- 6. 카드 --- */
 .card {
   background: var(--card);
@@ -378,9 +392,9 @@ h1, h2, h3, h4 {
 .form-input:focus-visible,
 .form-select:focus-visible,
 .form-textarea:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 .form-input::placeholder, .form-textarea::placeholder { color: var(--text-3); }

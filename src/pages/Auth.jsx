@@ -139,8 +139,8 @@ export default function Auth() {
                 </button>
               </form>
               <p className="auth-switch">
-                계정이 없으신가요?{' '}
-                <a href="#" onClick={e => { e.preventDefault(); setPanel('signup') }}>회원가입</a>
+                계정이{"\u00A0"}없으신가요?{' '}
+                <button type="button" className="btn-link" onClick={() => setPanel('signup')}>회원가입</button>
               </p>
             </div>
           )}
@@ -193,8 +193,8 @@ export default function Auth() {
                 </button>
               </form>
               <p className="auth-switch">
-                이미 계정이 있으신가요?{' '}
-                <a href="#" onClick={e => { e.preventDefault(); setPanel('login') }}>로그인</a>
+                이미{"\u00A0"}계정이{"\u00A0"}있으신가요?{' '}
+                <button type="button" className="btn-link" onClick={() => setPanel('login')}>로그인</button>
               </p>
             </div>
           )}

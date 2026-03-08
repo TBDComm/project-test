@@ -1,7 +1,8 @@
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import { PLANS, getRemainingUses } from '../lib/utils'
+import { PLANS } from '../lib/constants'
+import { getRemainingUses } from '../lib/plan'
 
 export default function Dashboard() {
   const { user, userData } = useAuth()
@@ -79,9 +80,9 @@ export default function Dashboard() {
               <div className="action-desc">내 영상 제목과 카테고리를 입력하면, 지금 스포트된 상위 영상들의 패턴과 나란히 비교해드립니다.</div>
             </div>
             <div className="action-footer">
-              <span className="action-cta">비교 시작하기 →</span>
+              <span className="action-cta">비교{"\u00A0"}시작하기 <span aria-hidden="true">→</span></span>
               <span className={`badge ${plan === 'free' ? 'badge-purple' : 'badge-green'}`}>
-                {plan === 'free' ? `이번 달 ${remaining}회 남음` : '무제한'}
+                {plan === 'free' ? `이번\u00A0달 ${remaining}회\u00A0남음` : '무제한'}
               </span>
             </div>
           </Link>
@@ -97,10 +98,10 @@ export default function Dashboard() {
             </div>
             <div className="action-footer">
               {canTiming ? (
-                <span className="action-cta">리포트 보기 →</span>
+                <span className="action-cta">리포트{"\u00A0"}보기 <span aria-hidden="true">→</span></span>
               ) : (
                 <>
-                  <span className="action-cta" style={{ color: 'var(--text-3)' }}>업그레이드 필요</span>
+                  <span className="action-cta" style={{ color: 'var(--text-3)' }}>업그레이드{"\u00A0"}필요</span>
                   <span className="lock-badge">STARTER+</span>
                 </>
               )}

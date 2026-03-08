@@ -25,6 +25,7 @@ export default function Navbar() {
           </Link>
           <div className="nav-actions">
             <button
+              type="button"
               className="theme-toggle"
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
@@ -48,6 +49,7 @@ export default function Navbar() {
           </Link>
           <div className="nav-actions">
             <button
+              type="button"
               className="theme-toggle"
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
@@ -78,6 +80,7 @@ export default function Navbar() {
           </div>
           <div className="nav-actions">
             <button
+              type="button"
               className="theme-toggle"
               onClick={toggle}
               aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
@@ -85,7 +88,7 @@ export default function Navbar() {
               <span className="theme-icon" aria-hidden="true">{theme === 'dark' ? '○' : '●'}</span>
             </button>
             <Link to="/mypage" className="btn btn-ghost btn-sm">마이페이지</Link>
-            <button className="btn btn-secondary btn-sm" onClick={handleLogout}>로그아웃</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleLogout}>로그아웃</button>
           </div>
         </div>
       </nav>
@@ -106,6 +109,7 @@ export default function Navbar() {
         </div>
         <div className="nav-actions">
           <button
+            type="button"
             className="theme-toggle"
             onClick={toggle}
             aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}

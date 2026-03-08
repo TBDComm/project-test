@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../hooks/useTheme'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
-import { PLANS, getRemainingUses } from '../lib/utils'
+import { PLANS } from '../lib/constants'
+import { getRemainingUses } from '../lib/plan'
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
