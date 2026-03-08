@@ -66,7 +66,7 @@ export default function Navbar() {
     return (
       <nav className="navbar">
         <div className="navbar-inner">
-          <Link to="/dashboard" className="nav-logo">
+          <Link to="/" className="nav-logo">
             <span className="logo-icon" aria-hidden="true">M</span>
             MOMENTO
           </Link>

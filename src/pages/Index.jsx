@@ -1,17 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 export default function Index() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
   const observerRef = useRef(null)
-
-  useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true })
-  }, [user, navigate])
 
   // 스크롤 애니메이션
   useEffect(() => {
