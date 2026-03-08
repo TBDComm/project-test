@@ -46,16 +46,7 @@ export async function onRequest(context) {
   }
 
   const hasFileExt = /\.[a-zA-Z0-9]+$/.test(pathname)
-  const isSpaRoute = !hasFileExt && !pathname.startsWith('/api/')
-
-  let response
-  if (isSpaRoute && context.env?.ASSETS) {
-    // Always serve latest app shell for client-side routes.
-    const indexReq = new Request(new URL('/index.html', request.url).toString(), request)
-    response = await context.env.ASSETS.fetch(indexReq)
-  } else {
-    response = await context.next()
-  }
+  const response = await context.next()
 
   // Keep hashed static assets cacheable for performance.
   if (pathname.startsWith('/assets/')) return response
