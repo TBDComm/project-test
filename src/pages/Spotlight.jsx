@@ -372,7 +372,7 @@ export default function Spotlight() {
               </div>
             </aside>
 
-            <section id="result-panel">
+            <section id="result-panel" aria-live="polite" aria-busy={status === 'loading'}>
               {status === 'empty' && (
                 <div className="empty-state" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)' }}>
                   <div className="empty-icon" aria-hidden="true">✦</div>
@@ -382,7 +382,7 @@ export default function Spotlight() {
               )}
 
               {status === 'loading' && (
-                <div className="result-loading">
+                <div className="result-loading" role="status" aria-live="polite" aria-busy="true">
                   <div className="spinner" />
                   <span>유튜브 트렌드 데이터를 가져오는 중…</span>
                   <span style={{ fontSize: 13, color: 'var(--text-3)' }}>최대 10초가 소요될 수 있습니다.</span>
@@ -390,7 +390,7 @@ export default function Spotlight() {
               )}
 
               {status === 'error' && (
-                <div className="alert alert-error" style={{ borderRadius: 'var(--radius-xl)', padding: 24 }}>
+                <div className="alert alert-error" style={{ borderRadius: 'var(--radius-xl)', padding: 24 }} role="alert" aria-live="assertive">
                   <span aria-hidden="true">✕</span>
                   <div>{errorMsg}</div>
                 </div>

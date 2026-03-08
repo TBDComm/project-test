@@ -8,7 +8,6 @@ import { getDateBefore } from '../lib/date'
 import { formatNumber } from '../lib/format'
 
 const DAYS = ['일', '월', '화', '수', '목', '금', '토']
-
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
 async function fetchTopicData(topic, contentType) {
@@ -43,7 +42,7 @@ function analyzeData(videos, totalResults) {
   const avgViews = Math.round(viewCounts.reduce((a, b) => a + b, 0) / (viewCounts.length || 1))
 
   const dayHourCounts = {}
-  const dayDist = {} // dayIndex(0-6) → count
+  const dayDist = {}
 
   videos.forEach(v => {
     const iso = v.snippet?.publishedAt
@@ -65,34 +64,426 @@ function analyzeData(videos, totalResults) {
   return { avgViews, topTimings, totalResults, dayDist }
 }
 
+// ─── 멀티 키워드 비교 그리드 ──────────────────────────────────────────────────
+
+function ComparisonGrid({ results }) {
+  return (
+    <div className="timing-compare-grid">
+      {results.map(r => (
+        <div key={r.id} className="timing-compare-card">
+          <div className="timing-compare-card-header">
+            <span className="timing-compare-keyword">"{r.topic}"</span>
+            <span className="content-type-badge">{r.contentType}</span>
+          </div>
+          <div className="timing-compare-metrics">
+            <div className="timing-compare-metric">
+              <div className="timing-metric-label">최근 30일 업로드</div>
+              <div className="timing-metric-value">
+                약 {formatNumber(r.analysis.totalResults)}
+                <span className="timing-metric-unit">개</span>
+              </div>
+              <div className="timing-metric-note">한국(KR) · 30일 기준</div>
+            </div>
+            <div className="timing-compare-divider" aria-hidden="true" />
+            <div className="timing-compare-metric">
+              <div className="timing-metric-label">상위 영상 평균 조회수</div>
+              <div className="timing-metric-value">
+                {formatNumber(r.analysis.avgViews)}
+                <span className="timing-metric-unit">회</span>
+              </div>
+              <div className="timing-metric-note">조회수 상위 20개 기준</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── 해석 가이드 ──────────────────────────────────────────────────────────────
+
+const GUIDE_SCENARIOS = [
+  {
+    signals: [{ label: '업로드 ↑', dir: 'up' }, { label: '조회수 ↑', dir: 'up' }],
+    desc: '수요와 공급이 함께 큰 구간으로 해석할 수도 있어요. 다만 채널 규모가 큰 영상 비중이 높으면 조회수가 과대하게 보일 수 있습니다.',
+  },
+  {
+    signals: [{ label: '업로드 ↓', dir: 'down' }, { label: '조회수 ↑', dir: 'up' }],
+    desc: '상대적으로 덜 다뤄졌는데 반응은 큰 구간으로 볼 수도 있어요. 진입 여지를 시사할 수 있지만 표본 수가 적을 가능성도 함께 확인해보세요.',
+  },
+  {
+    signals: [{ label: '업로드 ↑', dir: 'up' }, { label: '조회수 ↓', dir: 'down' }],
+    desc: '공급이 많은데 개별 반응은 약한 구간으로 읽을 수도 있어요. 주제 자체보다 썸네일/제목 경쟁이 심한 상태일 가능성도 있습니다.',
+  },
+  {
+    signals: [{ label: '업로드 ↓', dir: 'down' }, { label: '조회수 ↓', dir: 'down' }],
+    desc: '시장 규모가 아직 작거나 탐색 단계인 구간으로 해석할 수 있어요. 키워드를 더 구체화하면 다른 패턴이 나올 수도 있습니다.',
+  },
+]
+
+function DataGuide() {
+  return (
+    <div className="timing-guide">
+      <div className="timing-guide-header">
+        <span className="timing-guide-icon" aria-hidden="true">◈</span>
+        <div className="timing-guide-title">이 두 수치, 어떻게 읽을 수 있을까요?</div>
+      </div>
+      <p className="timing-guide-intro">
+        업로드 수는 얼마나 많은 영상이 올라왔는지, 평균 조회수는 그 영상들이 얼마나 주목받았는지를 보여줍니다.
+        두 수치를 함께 보면 시장의 성격을 가늠해보는 데 도움이 될 수 있어요.
+        아래는 가능한 해석의 예시이며, 콘텐츠 성과에는 알고리즘·채널 규모·시기 등 다양한 요인이 작용합니다.
+      </p>
+      <div className="timing-guide-rules">
+        {GUIDE_SCENARIOS.map((s, i) => (
+          <div key={i} className="timing-guide-rule">
+            <div className="guide-signals">
+              {s.signals.map((sig, j) => (
+                <span key={j} className={`guide-signal ${sig.dir}`}>{sig.label}</span>
+              ))}
+            </div>
+            <div className="guide-rule-desc">{s.desc}</div>
+          </div>
+        ))}
+      </div>
+      <p className="timing-guide-disclaimer">
+        조회수는 상위 20개 영상 기준으로, 실제 해당 주제의 평균과 다를 수 있습니다.
+        업로드 수도 YouTube API의 추정치예요.
+      </p>
+    </div>
+  )
+}
+
+// ─── 업로드/조회수 관계 계산기 ───────────────────────────────────────────────
+
+function RelationCalculator({ results, baseId, onChangeBase }) {
+  const base = results.find(r => r.id === baseId) || results[0]
+
+  const rows = useMemo(() => {
+    if (!base) return []
+    const baseUpload = Math.max(base.analysis.totalResults, 1)
+    const baseViews = Math.max(base.analysis.avgViews, 1)
+    const baseEfficiency = baseViews / baseUpload
+
+    return results.map(r => {
+      const upload = Math.max(r.analysis.totalResults, 1)
+      const views = Math.max(r.analysis.avgViews, 1)
+      const uploadRatio = upload / baseUpload
+      const viewsRatio = views / baseViews
+      const efficiency = views / upload
+      const efficiencyRatio = efficiency / Math.max(baseEfficiency, 1e-9)
+
+      return {
+        id: r.id,
+        topic: r.topic,
+        upload: r.analysis.totalResults,
+        views: r.analysis.avgViews,
+        uploadRatio,
+        viewsRatio,
+        efficiency,
+        efficiencyRatio,
+      }
+    })
+  }, [results, base])
+
+  if (!base || results.length < 2) return null
+
+  return (
+    <div className="timing-calc-card">
+      <div className="timing-calc-head">
+        <div>
+          <div className="timing-calc-title">업로드·조회수 비교 계산기</div>
+          <p className="timing-calc-sub">
+            기준 키워드 대비 상대 비율을 계산해 비교합니다. 수치는 참고값이며 단정적 결론 대신 방향성 판단에 활용해보세요.
+          </p>
+        </div>
+        <label className="timing-calc-base">
+          <span>기준 키워드</span>
+          <select value={base.id} onChange={e => onChangeBase(Number(e.target.value))} className="form-select">
+            {results.map(r => (
+              <option key={r.id} value={r.id}>{r.topic}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="timing-calc-grid" role="table" aria-label="키워드 관계 계산 결과">
+        <div className="timing-calc-row timing-calc-row-head" role="row">
+          <span role="columnheader">키워드</span>
+          <span role="columnheader">업로드 비율</span>
+          <span role="columnheader">조회수 비율</span>
+          <span role="columnheader">반응 밀도</span>
+        </div>
+        {rows.map(r => (
+          <div key={r.id} className={`timing-calc-row${r.id === base.id ? ' active' : ''}`} role="row">
+            <span role="cell">"{r.topic}"</span>
+            <span role="cell">{r.uploadRatio.toFixed(2)}x</span>
+            <span role="cell">{r.viewsRatio.toFixed(2)}x</span>
+            <span role="cell">{r.efficiencyRatio.toFixed(2)}x</span>
+          </div>
+        ))}
+      </div>
+      <p className="timing-calc-footnote">
+        반응 밀도 = 평균 조회수 ÷ 업로드 수 (기준 키워드 대비 상대값)
+      </p>
+    </div>
+  )
+}
+
+// ─── 포지셔닝 맵 (스캐터 플롯) ───────────────────────────────────────────────
+
+const DOT_COLORS = ['#4F46E5', '#7C3AED', '#DB2777', '#059669', '#D97706', '#0284C7']
+
+function ScatterPlot({ results }) {
+  const W = 420, H = 290
+  const PAD = { top: 32, right: 110, bottom: 48, left: 56 }
+  const plotW = W - PAD.left - PAD.right
+  const plotH = H - PAD.top - PAD.bottom
+
+  const points = results.map(r => ({
+    id: r.id,
+    topic: r.topic,
+    x: r.analysis.totalResults,
+    y: r.analysis.avgViews,
+  }))
+
+  const maxX = Math.max(...points.map(p => p.x), 1)
+  const maxY = Math.max(...points.map(p => p.y), 1)
+
+  const toSVG = (x, y) => ({
+    px: PAD.left + (x / maxX) * plotW,
+    py: PAD.top + (1 - y / maxY) * plotH,
+  })
+
+  const midX = PAD.left + plotW / 2
+  const midY = PAD.top + plotH / 2
+
+  return (
+    <div className="timing-section-card" style={{ marginBottom: 16 }}>
+      <div className="timing-section-title">키워드 포지셔닝 맵</div>
+      <p className="timing-section-note" style={{ marginBottom: 12, marginTop: 0 }}>
+        각 키워드의 업로드 수(가로)와 평균 조회수(세로)를 기준으로 나타낸 참고 지도예요.
+      </p>
+      <div style={{ overflowX: 'auto' }}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          style={{ width: '100%', maxWidth: W, display: 'block' }}
+          aria-label="키워드 업로드 수 및 평균 조회수 포지셔닝 맵"
+          role="img"
+        >
+          {/* 사분면 배경 */}
+          <rect x={PAD.left} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="rgba(79,70,229,.05)" />
+          <rect x={midX} y={PAD.top} width={plotW / 2} height={plotH / 2} fill="rgba(79,70,229,.03)" />
+          <rect x={PAD.left} y={midY} width={plotW / 2} height={plotH / 2} fill="rgba(0,0,0,.02)" />
+          <rect x={midX} y={midY} width={plotW / 2} height={plotH / 2} fill="rgba(0,0,0,.02)" />
+
+          {/* 사분면 레이블 */}
+          <text x={PAD.left + 6} y={PAD.top + 14} fontSize="9" fill="rgba(79,70,229,.6)" fontFamily="inherit">업로드↓ · 조회수↑</text>
+          <text x={midX + 6} y={PAD.top + 14} fontSize="9" fill="rgba(79,70,229,.6)" fontFamily="inherit">업로드↑ · 조회수↑</text>
+          <text x={PAD.left + 6} y={H - PAD.bottom - 6} fontSize="9" fill="rgba(0,0,0,.3)" fontFamily="inherit">업로드↓ · 조회수↓</text>
+          <text x={midX + 6} y={H - PAD.bottom - 6} fontSize="9" fill="rgba(0,0,0,.3)" fontFamily="inherit">업로드↑ · 조회수↓</text>
+
+          {/* 축선 */}
+          <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1.5" />
+          <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1.5" />
+
+          {/* 중간선 */}
+          <line x1={midX} y1={PAD.top} x2={midX} y2={H - PAD.bottom} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
+          <line x1={PAD.left} y1={midY} x2={W - PAD.right} y2={midY} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
+
+          {/* 축 레이블 */}
+          <text x={PAD.left + plotW / 2} y={H - 8} textAnchor="middle" fontSize="11" fill="var(--text-3)" fontFamily="inherit">업로드 수 많음 →</text>
+          <text
+            x={14} y={PAD.top + plotH / 2}
+            textAnchor="middle" fontSize="11" fill="var(--text-3)" fontFamily="inherit"
+            transform={`rotate(-90, 14, ${PAD.top + plotH / 2})`}
+          >평균 조회수 높음 ↑</text>
+
+          {/* 점 + 레이블 */}
+          {points.map((p, i) => {
+            const { px, py } = toSVG(p.x, p.y)
+            const color = DOT_COLORS[i % DOT_COLORS.length]
+            const label = p.topic.length > 9 ? p.topic.slice(0, 8) + '…' : p.topic
+            return (
+              <g key={p.id}>
+                <circle cx={px} cy={py} r={9} fill={color} opacity={0.85} />
+                <circle cx={px} cy={py} r={9} fill="none" stroke="white" strokeWidth="1.5" opacity={0.4} />
+                <text x={px + 14} y={py + 4} fontSize="12" fill="var(--text-1)" fontFamily="inherit" fontWeight="600">{label}</text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* 범례 */}
+      <div className="scatter-legend">
+        {results.map((r, i) => (
+          <div key={r.id} className="scatter-legend-item">
+            <span className="scatter-legend-dot" style={{ background: DOT_COLORS[i % DOT_COLORS.length] }} aria-hidden="true" />
+            <span className="scatter-legend-label">"{r.topic}"</span>
+            <span className="scatter-legend-vals">업로드 약 {formatNumber(r.analysis.totalResults)}개 · 조회수 {formatNumber(r.analysis.avgViews)}회</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── 상세 탭 선택 ─────────────────────────────────────────────────────────────
+
+function DetailTabs({ results, selectedId, onSelect }) {
+  if (results.length <= 1) return null
+  return (
+    <div className="timing-detail-tabs">
+      <span className="timing-detail-tabs-label">상세 데이터 보기</span>
+      <div className="timing-detail-tabs-list" role="tablist">
+        {results.map(r => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            aria-selected={r.id === selectedId}
+            className={`timing-detail-tab${r.id === selectedId ? ' active' : ''}`}
+            onClick={() => onSelect(r.id)}
+          >
+            {r.topic}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── 업로드 요일 차트 ─────────────────────────────────────────────────────────
+
+function DayChart({ result }) {
+  const { analysis } = result
+  const dayMax = Math.max(...Object.values(analysis.dayDist), 1)
+
+  return (
+    <div className="timing-section-card" style={{ marginBottom: 16 }}>
+      <div className="timing-section-title">"{result.topic}" 주목받은 영상의 업로드 요일</div>
+      <div className="timing-day-bars" role="img" aria-label="요일별 업로드 분포 막대 그래프">
+        {DAYS.map((day, i) => {
+          const count = analysis.dayDist[i] || 0
+          const pct = Math.round((count / dayMax) * 100)
+          const isTop = count === dayMax && count > 0
+          return (
+            <div key={day} className="timing-day-bar-item">
+              <div className="timing-day-bar-count">{count > 0 ? count : ''}</div>
+              <div className="timing-day-bar-track">
+                <div className={`timing-day-bar-fill${isTop ? ' top' : ''}`} style={{ height: `${pct}%` }} />
+              </div>
+              <div className={`timing-day-bar-label${isTop ? ' top' : ''}`}>{day}</div>
+            </div>
+          )
+        })}
+      </div>
+      {analysis.topTimings.length > 0 && (
+        <div className="timing-top-slots">
+          <span className="timing-top-slots-label">집중 시간대</span>
+          <div className="timing-slot-tags">
+            {analysis.topTimings.map(t => (
+              <span key={t} className="timing-slot-tag">{t}</span>
+            ))}
+          </div>
+          <span className="timing-top-slots-note">KST 기준</span>
+        </div>
+      )}
+      <p className="timing-section-note">상위 20개 영상 표본 기준입니다. 표본이 적을수록 참고용으로만 활용하세요.</p>
+    </div>
+  )
+}
+
+// ─── 최근 주목받은 영상 ───────────────────────────────────────────────────────
+
+function RecentVideos({ result }) {
+  const topVideos = useMemo(() => [...result.data.videos]
+    .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
+    .slice(0, 10), [result.data.videos])
+
+  return (
+    <div className="recent-videos" style={{ marginBottom: 20 }}>
+      <div className="recent-videos-header">
+        <span className="recent-videos-title">"{result.topic}" 최근 주목받은 영상</span>
+        <span style={{ fontSize: 13, color: 'var(--text-3)' }}>최근 30일 기준</span>
+      </div>
+      {topVideos.length === 0 ? (
+        <div className="empty-state"><div className="empty-title">영상 목록 없음</div></div>
+      ) : topVideos.map((v, i) => {
+        const title = v.snippet?.title || '제목 없음'
+        const channel = v.snippet?.channelTitle || ''
+        const published = v.snippet?.publishedAt
+        const views = formatNumber(Number(v.statistics?.viewCount || 0))
+        const dateStr = published ? dateFormatter.format(new Date(published)) : ''
+        return (
+          <div className="video-item" key={v.id || i}>
+            <div className="video-rank">{i + 1}</div>
+            <div className="video-info">
+              <div className="video-title">{title}</div>
+              <div className="video-meta">
+                <span>{channel}</span>
+                <span>조회수 {views}</span>
+                {dateStr && <span>{dateStr}</span>}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── 메인 페이지 ──────────────────────────────────────────────────────────────
+
 export default function Timing() {
   const { userData } = useAuth()
 
   const [topic, setTopic] = useState('')
   const [contentType, setContentType] = useState('롱폼')
-  const [status, setStatus] = useState('empty') // empty | loading | result | error
+  const [results, setResults] = useState([]) // [{ id, topic, contentType, data, analysis }]
+  const [loadingTopic, setLoadingTopic] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
-  const [result, setResult] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
+  const [calcBaseId, setCalcBaseId] = useState(null)
 
   const userDataLoading = userData === null
   const canUse = canUseFeature(userData, 'timing')
 
-  const handleAnalyze = async () => {
-    if (!topic.trim()) { alert('영상 주제를 입력해주세요.'); return }
-    setStatus('loading')
+  const selectedResult = results.find(r => r.id === selectedId) || results[results.length - 1] || null
+
+  const handleAdd = async () => {
+    const t = topic.trim()
+    if (!t) { alert('키워드를 입력해주세요.'); return }
+    if (results.some(r => r.topic === t && r.contentType === contentType)) {
+      alert(`"${t}"은(는) 이미 분석된 키워드예요.`); return
+    }
+    setLoadingTopic(t)
+    setErrorMsg('')
     try {
-      const data = await fetchTopicData(topic.trim(), contentType)
-      setResult({ topic: topic.trim(), data })
-      setStatus('result')
+      const data = await fetchTopicData(t, contentType)
+      const analysis = analyzeData(data.videos, data.totalResults)
+      const newResult = { id: Date.now(), topic: t, contentType, data, analysis }
+      setResults(prev => [...prev, newResult])
+      setSelectedId(newResult.id)
+      setCalcBaseId(prev => prev ?? newResult.id)
+      setTopic('')
     } catch (e) {
       setErrorMsg(e.message || '데이터를 가져오는 중 오류가 발생했습니다.')
-      setStatus('error')
+    } finally {
+      setLoadingTopic(null)
     }
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleAnalyze()
+  const handleRemove = (id) => {
+    setResults(prev => {
+      const next = prev.filter(r => r.id !== id)
+      if (selectedId === id) setSelectedId(next[next.length - 1]?.id ?? null)
+      if (calcBaseId === id) setCalcBaseId(next[0]?.id ?? null)
+      return next
+    })
   }
+
+  const handleKeyDown = (e) => { if (e.key === 'Enter') handleAdd() }
 
   return (
     <>
@@ -120,77 +511,139 @@ export default function Timing() {
           <>
             <div className="page-header">
               <h1 className="page-title">◇ Timing Report</h1>
-              <p className="page-desc">주제를 입력하면 최근 30일간 그 시장에서 어떤 흐름이 있었는지 수치로 확인합니다.</p>
+              <p className="page-desc">키워드를 입력하면 최근 30일간 그 시장의 흐름을 수치로 확인합니다. 여러 키워드를 추가해 비교할 수 있어요.</p>
             </div>
 
             <div className="timing-layout">
               <aside className="input-panel">
-                <h2 className="input-panel-title">주제 입력</h2>
+                <h2 className="input-panel-title">키워드 입력</h2>
                 <div className="input-form">
                   <div className="form-group">
                     <label className="form-label" htmlFor="topic-input">영상 주제 또는 키워드</label>
                     <input
-                      type="text" id="topic-input" name="topic" className="form-input"
+                      type="search" id="topic-input" name="topic" className="form-input"
                       placeholder="예: 다이어트, 재테크, 혼자 여행…"
-                      maxLength={60} autoComplete="off"
+                      maxLength={60} autoComplete="off" inputMode="search"
                       value={topic} onChange={e => setTopic(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      disabled={loadingTopic !== null}
                     />
-                    <span className="form-hint">주제를 한 단어 또는 짧은 문장으로 입력하세요.</span>
+                    <span className="form-hint">한 단어 또는 짧은 문장으로 입력하세요.</span>
                   </div>
-                <div className="form-group">
-                  <span className="form-label" id="timing-content-type-label">콘텐츠 유형</span>
-                  <div className="content-type-toggle" role="group" aria-labelledby="timing-content-type-label">
-                    {['롱폼', '숏폼'].map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        className={`content-type-btn${contentType === type ? ' active' : ''}`}
-                        onClick={() => setContentType(type)}
-                        aria-pressed={contentType === type}
-                      >
-                        {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
-                      </button>
-                    ))}
+
+                  <div className="form-group">
+                    <span className="form-label" id="timing-content-type-label">콘텐츠 유형</span>
+                    <div className="content-type-toggle" role="group" aria-labelledby="timing-content-type-label">
+                      {['롱폼', '숏폼'].map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          className={`content-type-btn${contentType === type ? ' active' : ''}`}
+                          onClick={() => setContentType(type)}
+                          aria-pressed={contentType === type}
+                        >
+                          {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
                   <button
                     className="btn btn-primary btn-full" type="button"
                     style={{ padding: 13 }}
-                    onClick={handleAnalyze}
-                    disabled={status === 'loading'}
+                    onClick={handleAdd}
+                    disabled={loadingTopic !== null}
                   >
-                    {status === 'loading' ? '분석 중…' : '시장 현황 분석'}
+                    {loadingTopic ? `"${loadingTopic}" 분석 중…` : results.length === 0 ? '시장 현황 분석' : '키워드 추가'}
                   </button>
+
+                  {errorMsg && (
+                    <div
+                      className="alert alert-error"
+                      style={{ marginTop: 10, padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 13 }}
+                      role="alert"
+                      aria-live="assertive"
+                    >
+                      {errorMsg}
+                    </div>
+                  )}
                 </div>
+
+                {results.length > 0 && (
+                  <div className="timing-keyword-list">
+                    <div className="timing-keyword-list-title">분석된 키워드 ({results.length})</div>
+                    {results.map(r => (
+                      <div
+                        key={r.id}
+                        className={`timing-keyword-item${r.id === selectedId ? ' active' : ''}`}
+                      >
+                        <button
+                          type="button"
+                          className="timing-keyword-select"
+                          onClick={() => setSelectedId(r.id)}
+                          aria-pressed={r.id === selectedId}
+                        >
+                          <div className="timing-keyword-info">
+                            <span className="timing-keyword-name">"{r.topic}"</span>
+                            <span className="timing-keyword-stat">{formatNumber(r.analysis.totalResults)}개 · {formatNumber(r.analysis.avgViews)}회</span>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className="timing-keyword-remove"
+                          aria-label={`"${r.topic}" 제거`}
+                          onClick={() => handleRemove(r.id)}
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </aside>
 
-              <section>
-                {status === 'empty' && (
-                  <div className="empty-state" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)' }}>
-                    <div className="empty-icon">◇</div>
-                    <div className="empty-title">시장 현황이 여기에 표시됩니다</div>
-                    <div className="empty-desc">왼쪽에 영상 주제를 입력하고 분석을 시작하세요.</div>
-                  </div>
-                )}
+              <section id="timing-result">
+                {results.length === 0 ? (
+                  loadingTopic ? (
+                    <div className="result-loading" role="status" aria-live="polite" aria-busy="true">
+                      <div className="spinner" />
+                      <span>"{loadingTopic}" 영상 데이터를 분석하는 중…</span>
+                    </div>
+                  ) : (
+                    <div className="empty-state" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)' }}>
+                      <div className="empty-icon">◇</div>
+                      <div className="empty-title">시장 현황이 여기에 표시됩니다</div>
+                      <div className="empty-desc">왼쪽에 키워드를 입력하고 분석을 시작하세요. 여러 키워드를 추가해 비교할 수 있어요.</div>
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {loadingTopic && (
+                      <div className="timing-loading-bar" role="status" aria-live="polite" aria-busy="true">
+                        <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                        <span>"{loadingTopic}" 분석 중…</span>
+                      </div>
+                    )}
 
-                {status === 'loading' && (
-                  <div className="result-loading">
-                    <div className="spinner" />
-                    <span>주제 관련 영상 데이터를 분석하는 중…</span>
-                  </div>
-                )}
+                    <ComparisonGrid results={results} />
+                    <RelationCalculator
+                      results={results}
+                      baseId={calcBaseId}
+                      onChangeBase={setCalcBaseId}
+                    />
+                    <DataGuide />
+                    <DetailTabs results={results} selectedId={selectedId} onSelect={setSelectedId} />
 
-                {status === 'error' && (
-                  <div className="alert alert-error" style={{ borderRadius: 'var(--radius-xl)', padding: 24 }}>
-                    <span aria-hidden="true">✕</span>
-                    <div>{errorMsg}</div>
-                  </div>
-                )}
+                    {selectedResult && (
+                      <>
+                        <DayChart result={selectedResult} />
+                        {results.length >= 2 && <ScatterPlot results={results} />}
+                        <RecentVideos result={selectedResult} />
+                      </>
+                    )}
 
-                {status === 'result' && result && (
-                  <TimingResult topic={result.topic} data={result.data} />
+                    <p style={{ fontSize: 12, color: 'var(--text-3)', padding: '0 4px' }}>
+                      데이터 출처: YouTube Data API v3 · 한국(KR) 기준
+                    </p>
+                  </>
                 )}
               </section>
             </div>
@@ -198,161 +651,5 @@ export default function Timing() {
         )}
       </main>
     </>
-  )
-}
-
-function TimingResult({ topic, data }) {
-  const a = useMemo(() => analyzeData(data.videos, data.totalResults), [data.videos, data.totalResults])
-
-  const now = useMemo(() =>
-    new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date()),
-    []
-  )
-
-  const topVideos = useMemo(() => [...data.videos]
-    .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
-    .slice(0, 10), [data.videos])
-
-  const dayMax = useMemo(() => Math.max(...Object.values(a.dayDist), 1), [a.dayDist])
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, padding: '0 4px' }}>
-        <div style={{ fontSize: 15, fontWeight: 700 }}>"{topic}" 주제 현황</div>
-        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>분석 시각: {now}</div>
-      </div>
-
-      {/* 핵심 지표 2개 */}
-      <div className="timing-metric-grid">
-        <div className="timing-metric-card">
-          <div className="timing-metric-label">최근 30일 업로드 수</div>
-          <div className="timing-metric-value">약 {formatNumber(a.totalResults)}<span className="timing-metric-unit">개</span></div>
-          <div className="timing-metric-note">한국(KR) · 최근 30일 기준</div>
-        </div>
-        <div className="timing-metric-card">
-          <div className="timing-metric-label">상위 영상 평균 조회수</div>
-          <div className="timing-metric-value">{formatNumber(a.avgViews)}<span className="timing-metric-unit">회</span></div>
-          <div className="timing-metric-note">조회수 상위 20개 영상 기준</div>
-        </div>
-      </div>
-
-      {/* 업로드 요일 분포 */}
-      <div className="timing-section-card">
-        <div className="timing-section-title">주목받은 영상의 업로드 요일</div>
-        <div className="timing-day-bars" role="img" aria-label="요일별 업로드 분포 막대 그래프">
-          {DAYS.map((day, i) => {
-            const count = a.dayDist[i] || 0
-            const pct = Math.round((count / dayMax) * 100)
-            const isTop = count === dayMax && count > 0
-            return (
-              <div key={day} className="timing-day-bar-item">
-                <div className="timing-day-bar-count">{count > 0 ? count : ''}</div>
-                <div className="timing-day-bar-track">
-                  <div
-                    className={`timing-day-bar-fill${isTop ? ' top' : ''}`}
-                    style={{ height: `${pct}%` }}
-                  />
-                </div>
-                <div className={`timing-day-bar-label${isTop ? ' top' : ''}`}>{day}</div>
-              </div>
-            )
-          })}
-        </div>
-        {a.topTimings.length > 0 && (
-          <div className="timing-top-slots">
-            <span className="timing-top-slots-label">집중 시간대</span>
-            <div className="timing-slot-tags">
-              {a.topTimings.map(t => (
-                <span key={t} className="timing-slot-tag">{t}</span>
-              ))}
-            </div>
-            <span className="timing-top-slots-note">KST 기준</span>
-          </div>
-        )}
-        <p className="timing-section-note">
-          상위 20개 영상 표본 기준입니다. 표본이 적을수록 참고용으로만 활용하세요.
-        </p>
-      </div>
-
-      {/* 데이터 해석 가이드 */}
-      <div className="timing-guide">
-        <div className="timing-guide-header">
-          <span className="timing-guide-icon" aria-hidden="true">◈</span>
-          <div className="timing-guide-title">이 수치를 어떻게 읽을까요?</div>
-        </div>
-        <p className="timing-guide-intro">
-          MOMENTO는 포화도를 하나의 점수로 압축하지 않습니다. 점수로 압축하는 순간 실제 맥락이
-          사라지기 때문에, 두 수치를 직접 보고 판단하실 수 있도록 했습니다.
-        </p>
-        <div className="timing-guide-rules">
-          <div className="timing-guide-rule">
-            <div className="guide-signals">
-              <span className="guide-signal up">업로드 ↑</span>
-              <span className="guide-signal up">조회수 ↑</span>
-            </div>
-            <div className="guide-rule-desc">시장이 크고 경쟁도 치열합니다. 차별화된 시각이나 포맷이 필요해요.</div>
-          </div>
-          <div className="timing-guide-rule">
-            <div className="guide-signals">
-              <span className="guide-signal up">업로드 ↑</span>
-              <span className="guide-signal down">조회수 ↓</span>
-            </div>
-            <div className="guide-rule-desc">공급 과잉 가능성이 있습니다. 시청자 수요 대비 영상이 너무 많을 수 있어요.</div>
-          </div>
-          <div className="timing-guide-rule">
-            <div className="guide-signals">
-              <span className="guide-signal down">업로드 ↓</span>
-              <span className="guide-signal up">조회수 ↑</span>
-            </div>
-            <div className="guide-rule-desc">수요 대비 공급이 적은 기회 주제일 수 있습니다. 진입 타이밍을 검토해보세요.</div>
-          </div>
-          <div className="timing-guide-rule">
-            <div className="guide-signals">
-              <span className="guide-signal down">업로드 ↓</span>
-              <span className="guide-signal down">조회수 ↓</span>
-            </div>
-            <div className="guide-rule-desc">시청자 관심도 자체가 낮은 주제일 수 있습니다. 키워드를 바꿔 다시 검색해보세요.</div>
-          </div>
-        </div>
-        <p className="timing-guide-disclaimer">
-          조회수는 상위 20개 영상 기준이므로 실제 평균보다 높을 수 있습니다.
-          절대적인 기준이 아닌 방향성을 파악하는 참고 지표로 활용하세요.
-        </p>
-      </div>
-
-      {/* 최근 주목받은 영상 */}
-      <div className="recent-videos" style={{ marginTop: 20 }}>
-        <div className="recent-videos-header">
-          <span className="recent-videos-title">최근 주목받은 관련 영상</span>
-          <span style={{ fontSize: 13, color: 'var(--text-3)' }}>최근 30일 기준</span>
-        </div>
-        {topVideos.length === 0 ? (
-          <div className="empty-state"><div className="empty-title">영상 목록 없음</div></div>
-        ) : topVideos.map((v, i) => {
-          const title = v.snippet?.title || '제목 없음'
-          const channel = v.snippet?.channelTitle || ''
-          const published = v.snippet?.publishedAt
-          const views = formatNumber(Number(v.statistics?.viewCount || 0))
-          const dateStr = published ? dateFormatter.format(new Date(published)) : ''
-          return (
-            <div className="video-item" key={v.id || i}>
-              <div className="video-rank">{i + 1}</div>
-              <div className="video-info">
-                <div className="video-title">{title}</div>
-                <div className="video-meta">
-                  <span>{channel}</span>
-                  <span>조회수 {views}</span>
-                  {dateStr && <span>{dateStr}</span>}
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <p style={{ marginTop: 14, fontSize: 12, color: 'var(--text-3)', padding: '0 4px' }}>
-        데이터 출처: YouTube Data API v3 · 한국(KR) 기준
-      </p>
-    </div>
   )
 }
