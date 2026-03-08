@@ -42,27 +42,26 @@ function analyzeData(videos, totalResults) {
   const avgViews = Math.round(viewCounts.reduce((a, b) => a + b, 0) / (viewCounts.length || 1))
 
   const dayHourCounts = {}
+  const dayDist = {} // dayIndex(0-6) → count
+
   videos.forEach(v => {
     const iso = v.snippet?.publishedAt
     if (!iso) return
     const d = new Date(iso)
     const kstHour = (d.getUTCHours() + 9) % 24
-    const dayName = DAYS[d.getDay()]
+    const dayIndex = d.getDay()
+    const dayName = DAYS[dayIndex]
     const key = `${dayName}요일 ${kstHour}시`
     dayHourCounts[key] = (dayHourCounts[key] || 0) + 1
+    dayDist[dayIndex] = (dayDist[dayIndex] || 0) + 1
   })
 
   const topTimings = Object.entries(dayHourCounts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 2)
+    .slice(0, 3)
     .map(([k]) => k)
 
-  let saturation, satPct
-  if (totalResults > 500)      { saturation = 'high';   satPct = 90 }
-  else if (totalResults > 100) { saturation = 'medium'; satPct = 55 }
-  else                         { saturation = 'low';    satPct = 20 }
-
-  return { avgViews, topTimings, saturation, satPct, totalResults }
+  return { avgViews, topTimings, totalResults, dayDist }
 }
 
 export default function Timing() {
@@ -73,7 +72,6 @@ export default function Timing() {
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
 
-  // userData가 아직 로드 중인 경우와 실제로 권한 없는 경우를 구분
   const userDataLoading = userData === null
   const canUse = canUseFeature(userData, 'timing')
 
@@ -110,7 +108,7 @@ export default function Timing() {
               <div className="up-icon">◇</div>
               <h2 className="up-title">Timing Report는 STARTER 플랜부터 사용 가능합니다</h2>
               <p className="up-desc">
-                영상 주제의 시장 현황, 포화도, 최근 업로드 빈도, 주목받은 타이밍을<br />
+                영상 주제의 시장 현황, 최근 업로드 빈도, 주목받은 타이밍을<br />
                 STARTER 플랜 이상에서 무제한으로 확인할 수 있습니다.
               </p>
               <Link to="/pricing" className="btn btn-primary btn-lg">플랜 업그레이드하기</Link>
@@ -187,14 +185,7 @@ export default function Timing() {
 function TimingResult({ topic, data }) {
   const a = useMemo(() => analyzeData(data.videos, data.totalResults), [data.videos, data.totalResults])
 
-  const satLabel = useMemo(() => ({ low: '낮음', medium: '보통', high: '높음' }[a.saturation]), [a.saturation])
-  const satDesc = useMemo(() => ({
-    low:    '이 주제를 다룬 최근 영상이 비교적 적습니다.',
-    medium: '이 주제를 다룬 영상이 꾸준히 올라오고 있습니다.',
-    high:   '이 주제를 다룬 영상이 매우 많이 올라오고 있습니다.',
-  }[a.saturation]), [a.saturation])
-
-  const now = useMemo(() => 
+  const now = useMemo(() =>
     new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date()),
     []
   )
@@ -203,6 +194,8 @@ function TimingResult({ topic, data }) {
     .sort((a, b) => Number(b.statistics?.viewCount || 0) - Number(a.statistics?.viewCount || 0))
     .slice(0, 10), [data.videos])
 
+  const dayMax = useMemo(() => Math.max(...Object.values(a.dayDist), 1), [a.dayDist])
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, padding: '0 4px' }}>
@@ -210,33 +203,105 @@ function TimingResult({ topic, data }) {
         <div style={{ fontSize: 12, color: 'var(--text-3)' }}>분석 시각: {now}</div>
       </div>
 
-      <div className="saturation-gauge">
-        <div className="gauge-title">주제 포화도</div>
-        <div className={`gauge-value ${a.saturation}`}>{satLabel}</div>
-        <div className="gauge-bar">
-          <div className={`gauge-fill ${a.saturation}`} style={{ width: `${a.satPct}%` }} />
+      {/* 핵심 지표 2개 */}
+      <div className="timing-metric-grid">
+        <div className="timing-metric-card">
+          <div className="timing-metric-label">최근 30일 업로드 수</div>
+          <div className="timing-metric-value">약 {formatNumber(a.totalResults)}<span className="timing-metric-unit">개</span></div>
+          <div className="timing-metric-note">한국(KR) · 최근 30일 기준</div>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 4 }}>{satDesc}</div>
-      </div>
-
-      <div className="timing-stat-list">
-        <div className="timing-stat-item">
-          <div className="timing-stat-label">최근 30일 업로드 수</div>
-          <div className="timing-stat-value">약 {formatNumber(a.totalResults)}개</div>
-          <div className="timing-stat-note">최근 30일 이내 유튜브 한국 기준</div>
-        </div>
-        <div className="timing-stat-item">
-          <div className="timing-stat-label">주목받은 영상의 업로드 시간대</div>
-          <div className="timing-stat-value">{a.topTimings.length ? a.topTimings.join(', ') : '—'}</div>
-          <div className="timing-stat-note">분석된 상위 영상들의 업로드 집중 시간 (KST)</div>
-        </div>
-        <div className="timing-stat-item">
-          <div className="timing-stat-label">평균 조회수</div>
-          <div className="timing-stat-value">{formatNumber(a.avgViews)}회</div>
-          <div className="timing-stat-note">최근 주목받은 관련 영상 평균 조회수</div>
+        <div className="timing-metric-card">
+          <div className="timing-metric-label">상위 영상 평균 조회수</div>
+          <div className="timing-metric-value">{formatNumber(a.avgViews)}<span className="timing-metric-unit">회</span></div>
+          <div className="timing-metric-note">조회수 상위 20개 영상 기준</div>
         </div>
       </div>
 
+      {/* 업로드 요일 분포 */}
+      <div className="timing-section-card">
+        <div className="timing-section-title">주목받은 영상의 업로드 요일</div>
+        <div className="timing-day-bars" role="img" aria-label="요일별 업로드 분포 막대 그래프">
+          {DAYS.map((day, i) => {
+            const count = a.dayDist[i] || 0
+            const pct = Math.round((count / dayMax) * 100)
+            const isTop = count === dayMax && count > 0
+            return (
+              <div key={day} className="timing-day-bar-item">
+                <div className="timing-day-bar-count">{count > 0 ? count : ''}</div>
+                <div className="timing-day-bar-track">
+                  <div
+                    className={`timing-day-bar-fill${isTop ? ' top' : ''}`}
+                    style={{ height: `${pct}%` }}
+                  />
+                </div>
+                <div className={`timing-day-bar-label${isTop ? ' top' : ''}`}>{day}</div>
+              </div>
+            )
+          })}
+        </div>
+        {a.topTimings.length > 0 && (
+          <div className="timing-top-slots">
+            <span className="timing-top-slots-label">집중 시간대</span>
+            <div className="timing-slot-tags">
+              {a.topTimings.map(t => (
+                <span key={t} className="timing-slot-tag">{t}</span>
+              ))}
+            </div>
+            <span className="timing-top-slots-note">KST 기준</span>
+          </div>
+        )}
+        <p className="timing-section-note">
+          상위 20개 영상 표본 기준입니다. 표본이 적을수록 참고용으로만 활용하세요.
+        </p>
+      </div>
+
+      {/* 데이터 해석 가이드 */}
+      <div className="timing-guide">
+        <div className="timing-guide-header">
+          <span className="timing-guide-icon" aria-hidden="true">◈</span>
+          <div className="timing-guide-title">이 수치를 어떻게 읽을까요?</div>
+        </div>
+        <p className="timing-guide-intro">
+          MOMENTO는 포화도를 하나의 점수로 압축하지 않습니다. 점수로 압축하는 순간 실제 맥락이
+          사라지기 때문에, 두 수치를 직접 보고 판단하실 수 있도록 했습니다.
+        </p>
+        <div className="timing-guide-rules">
+          <div className="timing-guide-rule">
+            <div className="guide-signals">
+              <span className="guide-signal up">업로드 ↑</span>
+              <span className="guide-signal up">조회수 ↑</span>
+            </div>
+            <div className="guide-rule-desc">시장이 크고 경쟁도 치열합니다. 차별화된 시각이나 포맷이 필요해요.</div>
+          </div>
+          <div className="timing-guide-rule">
+            <div className="guide-signals">
+              <span className="guide-signal up">업로드 ↑</span>
+              <span className="guide-signal down">조회수 ↓</span>
+            </div>
+            <div className="guide-rule-desc">공급 과잉 가능성이 있습니다. 시청자 수요 대비 영상이 너무 많을 수 있어요.</div>
+          </div>
+          <div className="timing-guide-rule">
+            <div className="guide-signals">
+              <span className="guide-signal down">업로드 ↓</span>
+              <span className="guide-signal up">조회수 ↑</span>
+            </div>
+            <div className="guide-rule-desc">수요 대비 공급이 적은 기회 주제일 수 있습니다. 진입 타이밍을 검토해보세요.</div>
+          </div>
+          <div className="timing-guide-rule">
+            <div className="guide-signals">
+              <span className="guide-signal down">업로드 ↓</span>
+              <span className="guide-signal down">조회수 ↓</span>
+            </div>
+            <div className="guide-rule-desc">시청자 관심도 자체가 낮은 주제일 수 있습니다. 키워드를 바꿔 다시 검색해보세요.</div>
+          </div>
+        </div>
+        <p className="timing-guide-disclaimer">
+          조회수는 상위 20개 영상 기준이므로 실제 평균보다 높을 수 있습니다.
+          절대적인 기준이 아닌 방향성을 파악하는 참고 지표로 활용하세요.
+        </p>
+      </div>
+
+      {/* 최근 주목받은 영상 */}
       <div className="recent-videos" style={{ marginTop: 20 }}>
         <div className="recent-videos-header">
           <span className="recent-videos-title">최근 주목받은 관련 영상</span>

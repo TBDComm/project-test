@@ -1294,10 +1294,55 @@ h1, h2, h3, h4 {
   border-radius: var(--radius-xl);
 }
 
-.saturation-gauge {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
-  padding: 24px;
+/* 핵심 지표 카드 */
+.timing-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.timing-metric-card {
+  padding: 20px 22px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.timing-metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.timing-metric-value {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-1);
+  line-height: 1;
+}
+
+.timing-metric-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-left: 2px;
+}
+
+.timing-metric-note {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 8px;
+}
+
+/* 요일 분포 */
+.timing-section-card {
+  padding: 20px 22px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1305,31 +1350,204 @@ h1, h2, h3, h4 {
   margin-bottom: 16px;
 }
 
-.gauge-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
-.gauge-value { font-size: 28px; font-weight: 900; letter-spacing: -0.03em; }
-.gauge-value.low    { color: var(--success); }
-.gauge-value.medium { color: var(--warning); }
-.gauge-value.high   { color: var(--error); }
+.timing-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
 
-.gauge-bar { width: 100%; height: 7px; background: var(--bg-2); border-radius: var(--radius-full); overflow: hidden; }
-.gauge-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s ease; }
-.gauge-fill.low    { background: var(--success); }
-.gauge-fill.medium { background: var(--warning); }
-.gauge-fill.high   { background: var(--error); }
+.timing-day-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 80px;
+  margin-bottom: 14px;
+}
 
-.timing-stat-list { display: flex; flex-direction: column; gap: 10px; }
+.timing-day-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
 
-.timing-stat-item {
-  padding: 16px;
+.timing-day-bar-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  height: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.timing-day-bar-track {
+  flex: 1;
+  width: 100%;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.timing-day-bar-fill {
+  width: 100%;
+  background: var(--border);
+  border-radius: var(--radius-sm);
+  transition: height 0.4s ease;
+  min-height: 0;
+}
+
+.timing-day-bar-fill.top {
+  background: var(--accent);
+}
+
+.timing-day-bar-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.timing-day-bar-label.top {
+  color: var(--accent);
+}
+
+.timing-top-slots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.timing-top-slots-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.timing-top-slots-note {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-left: auto;
+}
+
+.timing-slot-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.timing-slot-tag {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.timing-section-note {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+/* 데이터 해석 가이드 */
+.timing-guide {
+  padding: 20px 22px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+
+.timing-guide-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.timing-guide-icon {
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.timing-guide-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.timing-guide-intro {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.timing-guide-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.timing-guide-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
 }
 
-.timing-stat-label { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-.timing-stat-value { font-size: 18px; font-weight: 700; }
-.timing-stat-note  { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+.guide-signals {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.guide-signal {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.guide-signal.up   { background: #dcfce7; color: #166534; }
+.guide-signal.down { background: #fee2e2; color: #991b1b; }
+
+[data-theme="dark"] .guide-signal.up   { background: #14532d; color: #86efac; }
+[data-theme="dark"] .guide-signal.down { background: #7f1d1d; color: #fca5a5; }
+
+.guide-rule-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+  padding-top: 2px;
+}
+
+.timing-guide-disclaimer {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin: 0;
+}
 
 .recent-videos {
   background: var(--card);
@@ -1595,5 +1813,5 @@ h1, h2, h3, h4 {
   }
   .fade-in-up { animation: none; opacity: 1; transform: none; }
   .spinner { animation: none; border-top-color: var(--accent); }
-  .gauge-fill, .usage-bar-fill { transition: none; }
+  .gauge-fill, .usage-bar-fill, .timing-day-bar-fill { transition: none; }
 }
