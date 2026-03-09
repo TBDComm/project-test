@@ -15,6 +15,18 @@ export default function Navbar() {
   // 라우트 변경 시 메뉴 닫기
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    if (window.innerWidth > 720 || !menuOpen) return undefined
+
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = overflow
+    }
+  }, [menuOpen])
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
   }

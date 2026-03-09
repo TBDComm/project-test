@@ -83,12 +83,12 @@ export default function MyPage() {
                   <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{name}</h2>
                   <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 24 }}>{user?.email || ''}</p>
                   <hr className="divider" />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                  <div className="info-list" style={{ marginTop: 8 }}>
+                    <div className="info-row" style={{ fontSize: 14 }}>
                       <span style={{ color: 'var(--text-2)' }}>가입일</span>
                       <span>{joinedStr}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                    <div className="info-row" style={{ fontSize: 14 }}>
                       <span style={{ color: 'var(--text-2)' }}>현재 플랜</span>
                       <span style={{ fontWeight: 600 }}>{PLANS[plan]?.name || '무료'}</span>
                     </div>
@@ -126,16 +126,16 @@ export default function MyPage() {
                     )}
                     <div className="card" style={{ marginBottom: 20 }}>
                       <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>결제 정보</h3>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div className="info-list" style={{ fontSize: 14 }}>
+                        <div className="info-row">
                           <span style={{ color: 'var(--text-2)' }}>다음 결제일</span>
                           <span>{endStr}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div className="info-row">
                           <span style={{ color: 'var(--text-2)' }}>결제 금액</span>
                           <span>{(PLANS[plan]?.price || 0).toLocaleString('ko-KR')}원</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div className="info-row">
                           <span style={{ color: 'var(--text-2)' }}>결제 수단</span>
                           <span>등록된 카드</span>
                         </div>
@@ -163,7 +163,7 @@ export default function MyPage() {
                             해지 후에도 <strong>{endStr}</strong>까지는 현재 플랜을 이용할 수 있습니다.
                             이후 무료 플랜으로 전환됩니다.
                           </p>
-                          <div style={{ display: 'flex', gap: 12 }}>
+                          <div className="stack-actions">
                             <button
                               className="btn btn-danger" type="button"
                               onClick={handleCancelConfirm}
@@ -189,7 +189,7 @@ export default function MyPage() {
                 <div className="card">
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>이번 달 사용 현황</h3>
                   <div style={{ marginBottom: 28 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
+                    <div className="info-row" style={{ marginBottom: 8, fontSize: 14 }}>
                       <span style={{ color: 'var(--text-2)' }}>Spotlight Compare</span>
                       <span>{usage} / {usageLimit}회</span>
                     </div>
@@ -216,7 +216,7 @@ export default function MyPage() {
               <div className="mypage-section active">
                 <div className="card">
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>화면 설정</h3>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div className="settings-row">
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>화면 모드</div>
                       <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 3 }}>다크 모드와 라이트 모드 중 선택하세요.</div>

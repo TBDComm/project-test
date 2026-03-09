@@ -185,6 +185,9 @@ body {
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; touch-action: manipulation; }
 button { font-family: inherit; cursor: pointer; border: none; touch-action: manipulation; }
+input, textarea, select, button {
+  min-width: 0;
+}
 
 /* 포커스 링 */
 button:focus-visible,
@@ -266,6 +269,7 @@ h1, h2, h3, h4 {
 .section { padding: 96px 0; }
 
 .hidden { display: none !important; }
+.page-shell-narrow { max-width: 540px; }
 
 /* --- 4. 네비게이션 --- */
 .navbar {
@@ -282,6 +286,7 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   height: 64px;
   padding: 0 24px;
   max-width: 1200px;
@@ -337,6 +342,67 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: 8px;
 }
+
+/* 햄버거 버튼 — 데스크톱에서는 숨김, 모바일에서 표시 */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  color: var(--text-1);
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition);
+}
+.hamburger-btn:hover { background: var(--bg-1); border-color: var(--border-strong); }
+.hamburger-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 데스크톱 전용 nav 액션 — 모바일에서 숨김 */
+.nav-action-desktop { display: inline-flex; }
+
+/* 모바일 내비게이션 드롭다운 */
+.mobile-menu {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-0);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 12px;
+  box-shadow: var(--shadow-md);
+}
+
+/* 데스크톱에서 모바일 메뉴 강제 숨김 */
+@media (min-width: 721px) {
+  .mobile-menu { display: none !important; }
+}
+
+.mobile-menu-link {
+  display: block;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  touch-action: manipulation;
+  min-height: 44px;
+  transition: color var(--transition), background-color var(--transition);
+}
+.mobile-menu-link:hover { color: var(--text-1); background: var(--bg-1); }
+.mobile-menu-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--text-1); background: var(--bg-1); }
+.mobile-menu-link.active { color: var(--accent); background: var(--accent-subtle); font-weight: 600; }
+.mobile-menu-divider { border: none; border-top: 1px solid var(--border); margin: 8px 20px; }
+.mobile-menu-cta { color: var(--accent); font-weight: 700; }
 
 /* 테마 토글 버튼 */
 .theme-toggle {
@@ -1055,6 +1121,47 @@ h1, h2, h3, h4 {
 .footer-links  { display: flex; gap: 20px; }
 .footer-link   { font-size: 13px; color: var(--text-3); transition: color var(--transition); }
 .footer-link:hover { color: var(--text-2); }
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.info-row > :last-child {
+  text-align: right;
+}
+
+.stack-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
 
 /* =============================================
    인증 페이지
@@ -2329,6 +2436,8 @@ h1, h2, h3, h4 {
    ============================================= */
 
 @media (max-width: 960px) {
+  .container         { padding: 0 20px; }
+  .navbar-inner      { padding: 0 20px; }
   .feature-row { grid-template-columns: 1fr; gap: 40px; }
   .feature-row.reverse { direction: ltr; }
   .problem-grid      { grid-template-columns: 1fr; }
@@ -2344,12 +2453,57 @@ h1, h2, h3, h4 {
 
 @media (max-width: 720px) {
   .section { padding: 64px 0; }
+  .page-shell-narrow { max-width: none; }
+  .navbar-inner {
+    min-height: 64px;
+    height: auto;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .nav-logo { font-size: 16px; min-width: 0; }
+  .nav-actions { gap: 6px; margin-left: auto; }
+  .nav-action-desktop { display: none; }
+  .hamburger-btn { display: inline-flex; }
+  .theme-toggle,
+  .hamburger-btn { width: 38px; height: 38px; }
   .hero { padding: 64px 0 48px; }
+  .hero-eyebrow { margin-bottom: 20px; }
+  .hero-title { font-size: clamp(30px, 10vw, 42px); margin-bottom: 16px; }
+  .hero-sub { font-size: 15px; margin-bottom: 28px; line-height: 1.7; }
+  .hero-actions { flex-direction: column; }
+  .hero-actions .btn { width: 100%; }
   .features-section { padding: 64px 0; }
   .feature-row { margin-bottom: 64px; }
   .problem-section { padding: 64px 0; }
+  .problem-card,
+  .feature-visual,
+  .pricing-card,
+  .pricing-page-card,
+  .action-card,
+  .input-panel,
+  .timing-metric-card,
+  .timing-section-card,
+  .timing-guide,
+  .recent-videos,
+  .card,
+  .channel-input-section,
+  .ch-section,
+  .channel-header-card,
+  .subscription-status-card {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
   .stats-grid    { grid-template-columns: 1fr; }
   .quick-actions { grid-template-columns: 1fr; }
+  .action-footer,
+  .timing-top-slots,
+  .recent-videos-header,
+  .footer-links {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .timing-top-slots-note { margin-left: 0; }
+  .compare-preview { border-radius: var(--radius-lg); }
 
   .compare-preview-header,
   .compare-row,
@@ -2368,6 +2522,47 @@ h1, h2, h3, h4 {
     border-bottom: 1px solid var(--border);
   }
 
+  .compare-col-header.mine,
+  .compare-cell.mine-cell,
+  .table-col-head,
+  .table-cell {
+    padding-left: 20px;
+  }
+
+  .fv-metric,
+  .timing-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fv-stat-item,
+  .timing-compare-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fv-bar-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+  }
+
+  .fv-bar-label,
+  .fv-bar-track {
+    width: 100%;
+  }
+
+  .fv-bar-label,
+  .metric-bar-label,
+  .ch-dist-label {
+    min-width: 0;
+  }
+
+  .fv-bar-track,
+  .metric-bar-track,
+  .ch-dist-track {
+    min-width: 0;
+  }
+
   .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
   .nav-links { display: none; }
   .timing-compare-metrics { grid-template-columns: 1fr; }
@@ -2376,12 +2571,123 @@ h1, h2, h3, h4 {
   .timing-calc-base { min-width: 100%; }
   .timing-calc-row { grid-template-columns: 1fr 1fr; }
   .timing-calc-row > span:nth-child(1) { grid-column: 1 / -1; }
+  .timing-day-bars { gap: 6px; }
+  .video-item { padding: 14px 18px; gap: 12px; }
+  .pricing-faq { margin-top: 48px; }
+  .mypage-sidebar {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+  }
+  .mypage-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .channel-header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
   .container { padding: 0 16px; }
+  .navbar-inner { padding: 10px 16px; }
+  .nav-logo { font-size: 15px; }
+  .nav-logo .logo-icon { width: 28px; height: 28px; }
+  .mobile-menu-link { padding-left: 16px; padding-right: 16px; }
   .auth-box  { padding: 28px 20px; }
   .app-main  { padding: 24px 16px; }
+  .btn {
+    min-height: 44px;
+    white-space: normal;
+  }
+  .hero-note,
+  .preview-label,
+  .timing-detail-tabs-label,
+  .channel-input-hint,
+  .saved-channel-label,
+  .saved-channel-time,
+  .footer-copy,
+  .footer-link {
+    font-size: 12px;
+  }
+  .compare-col-header,
+  .compare-cell,
+  .table-col-head,
+  .table-cell,
+  .problem-card,
+  .feature-visual,
+  .pricing-card,
+  .pricing-page-card,
+  .stat-card,
+  .action-card,
+  .input-panel,
+  .timing-compare-card,
+  .timing-calc-card,
+  .timing-metric-card,
+  .timing-section-card,
+  .timing-guide,
+  .channel-input-section,
+  .channel-header-card,
+  .ch-section,
+  .card {
+    padding: 16px;
+  }
+  .compare-col-header.mine,
+  .compare-cell.mine-cell,
+  .table-col-head,
+  .table-cell {
+    padding-left: 16px;
+  }
+  .greeting-title,
+  .page-title,
+  .section-title {
+    font-size: clamp(24px, 8vw, 30px);
+  }
+  .stat-value,
+  .timing-metric-value,
+  .plan-price,
+  .pricing-price {
+    font-size: 28px;
+  }
+  .action-footer,
+  .info-row,
+  .settings-row,
+  .stack-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .info-row > :last-child {
+    text-align: left;
+  }
+  .stack-actions > * {
+    width: 100%;
+  }
+  .settings-row .btn {
+    width: 100%;
+  }
+  .footer-links {
+    gap: 12px;
+  }
+  .recent-videos-header,
+  .timing-top-slots {
+    gap: 8px;
+  }
+  .timing-calc-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .timing-calc-row > span:nth-child(1) {
+    grid-column: auto;
+  }
+  .ch-compare-head > div,
+  .ch-compare-label,
+  .ch-compare-mine,
+  .ch-compare-trend {
+    padding: 12px;
+  }
 }
 
 /* =============================================

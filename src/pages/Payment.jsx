@@ -89,33 +89,33 @@ export default function Payment() {
     <>
       <a href="#main-content" className="skip-link">본문으로 건너뛰기</a>
       <Navbar />
-      <main className="app-main" id="main-content" style={{ maxWidth: 540 }}>
+      <main className="app-main page-shell-narrow" id="main-content">
         <div className="page-header">
           <h1 className="page-title">결제</h1>
         </div>
 
         <div className="card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div className="section-header-row">
             <h2 style={{ fontSize: 18, fontWeight: 700 }}>{plan.name}</h2>
             <span className="badge badge-purple">구독</span>
           </div>
           <hr className="divider" />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 15 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div className="info-list" style={{ fontSize: 15 }}>
+            <div className="info-row">
               <span style={{ color: 'var(--text-2)' }}>플랜</span>
               <span style={{ fontWeight: 600 }}>{plan.name}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="info-row">
               <span style={{ color: 'var(--text-2)' }}>결제 금액</span>
               <span style={{ fontWeight: 700, fontSize: 18 }}>
                 {new Intl.NumberFormat('ko-KR').format(plan.price)}원/월
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="info-row">
               <span style={{ color: 'var(--text-2)' }}>결제 주기</span>
               <span>매월 자동 결제</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div className="info-row">
               <span style={{ color: 'var(--text-2)' }}>해지</span>
               <span>언제든 가능</span>
             </div>
@@ -124,7 +124,7 @@ export default function Payment() {
 
         <div className="card" style={{ marginBottom: 20 }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>주문자 정보</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="info-list">
             <div className="form-group">
               <label className="form-label" htmlFor="payer-email">이메일</label>
               <input
