@@ -330,8 +330,8 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   background: transparent;
   border: 1px solid var(--border);
@@ -349,6 +349,67 @@ h1, h2, h3, h4 {
   background: var(--bg-1);
   border-color: var(--border-strong);
   color: var(--text-1);
+}
+
+/* 햄버거 버튼 — 모바일 전용 (데스크톱에서는 숨김) */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  color: var(--text-1);
+  transition: background-color var(--transition), border-color var(--transition);
+}
+.hamburger-btn:hover { background: var(--bg-1); border-color: var(--border-strong); }
+.hamburger-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 모바일 내비게이션 드롭다운 */
+.mobile-menu {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 12px;
+}
+
+.mobile-menu-link {
+  display: block;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  touch-action: manipulation;
+  transition: color var(--transition), background-color var(--transition);
+}
+.mobile-menu-link:hover,
+.mobile-menu-link:focus-visible {
+  color: var(--text-1);
+  background: var(--bg-1);
+  outline: none;
+}
+.mobile-menu-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.mobile-menu-link.active { color: var(--accent); background: var(--accent-subtle); font-weight: 600; }
+.mobile-menu-divider { border: none; border-top: 1px solid var(--border); margin: 8px 20px; }
+.mobile-menu-cta { color: var(--accent); font-weight: 700; }
+
+/* 데스크톱에서 모바일 메뉴 강제 숨김 */
+@media (min-width: 721px) {
+  .mobile-menu { display: none !important; }
 }
 
 /* --- 5. 버튼 --- */
@@ -1255,6 +1316,39 @@ h1, h2, h3, h4 {
 }
 
 .input-panel-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+
+/* 입력 패널 헤더 행 */
+.input-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+.input-panel-header .input-panel-title { margin-bottom: 0; }
+.input-panel-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* 패널 접기/펼치기 토글 — 모바일 전용 */
+.panel-toggle-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  min-height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: nowrap;
+  gap: 4px;
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+.panel-toggle-btn:hover { background: var(--bg-2); color: var(--text-1); border-color: var(--border-strong); }
+.panel-toggle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .input-form { display: flex; flex-direction: column; gap: 18px; }
 
@@ -2323,6 +2417,9 @@ h1, h2, h3, h4 {
   .timing-layout     { grid-template-columns: 1fr; }
   .input-panel { position: static; }
   .mypage-grid { grid-template-columns: 1fr; }
+
+  /* 패널 토글 버튼 모바일에서 표시 */
+  .panel-toggle-btn { display: inline-flex; }
 }
 
 @media (max-width: 720px) {
@@ -2353,6 +2450,13 @@ h1, h2, h3, h4 {
 
   .footer-inner { flex-direction: column; gap: 20px; text-align: center; }
   .nav-links { display: none; }
+  .hamburger-btn { display: inline-flex; }
+  .nav-action-desktop { display: none; }
+
+  /* 터치 타겟 최소화 */
+  .timing-keyword-remove { width: 40px; height: 40px; }
+  .btn-sm { padding: 10px 14px; min-height: 40px; }
+  .content-type-btn { padding: 10px; }
   .timing-compare-metrics { grid-template-columns: 1fr; }
   .timing-compare-divider { display: none; }
   .timing-calc-head { flex-direction: column; }

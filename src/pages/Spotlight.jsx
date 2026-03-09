@@ -265,6 +265,7 @@ export default function Spotlight() {
   const [errorMsg, setErrorMsg] = useState('')
   const [result, setResult] = useState(null)
   const [localUserData, setLocalUserData] = useState(userData)
+  const [panelOpen, setPanelOpen] = useState(true)
   const spotlightStorageKey = useMemo(
     () => `momento_spotlight_state_${SPOTLIGHT_STATE_VERSION}_${user?.id || 'guest'}`,
     [user?.id]
@@ -362,6 +363,12 @@ export default function Spotlight() {
 
       setResult({ analysis, myTitle: videoTitle.trim(), myThumb: thumbnailText.trim(), categoryId: category, contentType })
       setStatus('result')
+      if (window.innerWidth <= 960) {
+        setPanelOpen(false)
+        setTimeout(() => {
+          document.getElementById('result-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      }
     } catch (e) {
       setErrorMsg(e.message || '데이터를 가져오는 중 오류가 발생했습니다.')
       setStatus('error')
@@ -396,84 +403,100 @@ export default function Spotlight() {
         ) : (
           <div className="spotlight-layout">
             <aside className="input-panel">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <h2 className="input-panel-title" style={{ marginBottom: 0 }}>내 영상 정보 입력</h2>
-                {isDirty && (
+              <div className="input-panel-header">
+                <h2 className="input-panel-title">내 영상 정보 입력</h2>
+                <div className="input-panel-header-actions">
+                  {isDirty && panelOpen && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={handleClearAll}
+                      aria-label="입력 내용 및 분석 결과 전체 초기화"
+                      style={{ touchAction: 'manipulation' }}
+                    >
+                      초기화
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={handleClearAll}
-                    aria-label="입력 내용 및 분석 결과 전체 초기화"
-                    style={{ touchAction: 'manipulation', flexShrink: 0 }}
+                    className="panel-toggle-btn"
+                    onClick={() => setPanelOpen(p => !p)}
+                    aria-expanded={panelOpen}
+                    aria-label={panelOpen ? '입력 패널 접기' : '입력 패널 펼치기'}
                   >
-                    전체 초기화
+                    {panelOpen ? '접기 ▲' : (status === 'result' ? '수정 ▼' : '펼치기 ▼')}
                   </button>
-                )}
+                </div>
               </div>
-              {usageNotice && <div className="usage-notice">{usageNotice}</div>}
 
-              <div className="input-form">
-                <div className="form-group">
-                  <label className="form-label" htmlFor="video-title">영상 제목</label>
-                  <input
-                    type="text" id="video-title" name="video-title" className="form-input"
-                    placeholder="예: 혼자 도전한 제주 3박4일 브이로그…"
-                    maxLength={100} autoComplete="off"
-                    value={videoTitle} onChange={e => setVideoTitle(e.target.value)}
-                  />
-                  <span className="form-hint">실제 업로드한 제목을 그대로 입력하세요.</span>
-                </div>
+              {panelOpen && (
+                <>
+                  {usageNotice && <div className="usage-notice">{usageNotice}</div>}
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="thumbnail-text">썸네일 텍스트</label>
-                  <input
-                    type="text" id="thumbnail-text" name="thumbnail-text" className="form-input"
-                    placeholder="예: 혼자 제주도 도전기…"
-                    maxLength={60} autoComplete="off"
-                    value={thumbnailText} onChange={e => setThumbnailText(e.target.value)}
-                  />
-                  <span className="form-hint">썸네일에 들어간 텍스트. 없으면 비워두세요.</span>
-                </div>
+                  <div className="input-form">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="video-title">영상 제목</label>
+                      <input
+                        type="text" id="video-title" name="video-title" className="form-input"
+                        placeholder="예: 혼자 도전한 제주 3박4일 브이로그…"
+                        maxLength={100} autoComplete="off"
+                        value={videoTitle} onChange={e => setVideoTitle(e.target.value)}
+                      />
+                      <span className="form-hint">실제 업로드한 제목을 그대로 입력하세요.</span>
+                    </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="category">카테고리</label>
-                  <select
-                    id="category" name="category" className="form-select"
-                    value={category} onChange={e => setCategory(e.target.value)}
-                  >
-                    <option value="">카테고리 선택</option>
-                    {CATEGORIES.map(c => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="thumbnail-text">썸네일 텍스트</label>
+                      <input
+                        type="text" id="thumbnail-text" name="thumbnail-text" className="form-input"
+                        placeholder="예: 혼자 제주도 도전기…"
+                        maxLength={60} autoComplete="off"
+                        value={thumbnailText} onChange={e => setThumbnailText(e.target.value)}
+                      />
+                      <span className="form-hint">썸네일에 들어간 텍스트. 없으면 비워두세요.</span>
+                    </div>
 
-                <div className="form-group">
-                  <span className="form-label" id="content-type-label">콘텐츠 유형</span>
-                  <div className="content-type-toggle" role="group" aria-labelledby="content-type-label">
-                    {['롱폼', '숏폼'].map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        className={`content-type-btn${contentType === type ? ' active' : ''}`}
-                        onClick={() => setContentType(type)}
-                        aria-pressed={contentType === type}
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="category">카테고리</label>
+                      <select
+                        id="category" name="category" className="form-select"
+                        value={category} onChange={e => setCategory(e.target.value)}
                       >
-                        {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                        <option value="">카테고리 선택</option>
+                        {CATEGORIES.map(c => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                <button
-                  className="btn btn-primary btn-full" type="button"
-                  style={{ padding: 13 }}
-                  onClick={handleAnalyze}
-                  disabled={status === 'loading'}
-                >
-                  {status === 'loading' ? '분석\u00A0중…' : '비교\u00A0분석\u00A0시작'}
-                </button>
-              </div>
+                    <div className="form-group">
+                      <span className="form-label" id="content-type-label">콘텐츠 유형</span>
+                      <div className="content-type-toggle" role="group" aria-labelledby="content-type-label">
+                        {['롱폼', '숏폼'].map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={`content-type-btn${contentType === type ? ' active' : ''}`}
+                            onClick={() => setContentType(type)}
+                            aria-pressed={contentType === type}
+                          >
+                            {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      className="btn btn-primary btn-full" type="button"
+                      style={{ padding: 13 }}
+                      onClick={handleAnalyze}
+                      disabled={status === 'loading'}
+                    >
+                      {status === 'loading' ? '분석\u00A0중…' : '비교\u00A0분석\u00A0시작'}
+                    </button>
+                  </div>
+                </>
+              )}
             </aside>
 
             <section id="result-panel" aria-live="polite" aria-busy={status === 'loading'}>
@@ -550,8 +573,8 @@ function SpotlightResult({ result }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: 16, padding: '0 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{categoryName} · 상위 20개 기준</span>
           <span className="content-type-badge">{contentType}</span>
         </div>

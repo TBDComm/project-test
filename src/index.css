@@ -2432,7 +2432,7 @@ h1, h2, h3, h4 {
 
 /* 채널 헤더 카드 */
 .channel-header-card  { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 20px 24px; }
-.channel-header-inner { display: flex; align-items: center; gap: 16px; }
+.channel-header-inner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
 .channel-avatar {
   width: 56px; height: 56px;

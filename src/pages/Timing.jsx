@@ -557,6 +557,7 @@ export default function Timing() {
   const [errorMsg, setErrorMsg] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [calcBaseId, setCalcBaseId] = useState(null)
+  const [panelOpen, setPanelOpen] = useState(true)
   const timingStorageKey = useMemo(
     () => `momento_timing_state_${TIMING_STATE_VERSION}_${user?.id || 'guest'}`,
     [user?.id]
@@ -625,6 +626,12 @@ export default function Timing() {
       setSelectedId(newResult.id)
       setCalcBaseId(prev => prev ?? newResult.id)
       setTopic('')
+      if (window.innerWidth <= 960) {
+        setPanelOpen(false)
+        setTimeout(() => {
+          document.getElementById('timing-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 100)
+      }
     } catch (e) {
       setErrorMsg(e.message || '데이터를 가져오는 중 오류가 발생했습니다.')
     } finally {
@@ -682,98 +689,120 @@ export default function Timing() {
 
             <div className="timing-layout">
               <aside className="input-panel">
-                <h2 className="input-panel-title">키워드 입력</h2>
-                <div className="input-form">
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="topic-input">영상 주제 또는 키워드</label>
-                    <input
-                      type="search" id="topic-input" name="topic" className="form-input"
-                      placeholder="예: 다이어트, 재테크, 혼자 여행…"
-                      maxLength={60} autoComplete="off" inputMode="search"
-                      value={topic} onChange={e => setTopic(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      disabled={loadingTopic !== null}
-                    />
-                    <span className="form-hint">한 단어 또는 짧은 문장으로 입력하세요.</span>
-                  </div>
-
-                  <div className="form-group">
-                    <span className="form-label" id="timing-content-type-label">콘텐츠 유형</span>
-                    <div className="content-type-toggle" role="group" aria-labelledby="timing-content-type-label">
-                      {['롱폼', '숏폼'].map(type => (
-                        <button
-                          key={type}
-                          type="button"
-                          className={`content-type-btn${contentType === type ? ' active' : ''}`}
-                          onClick={() => setContentType(type)}
-                          aria-pressed={contentType === type}
-                        >
-                          {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    className="btn btn-primary btn-full" type="button"
-                    style={{ padding: 13 }}
-                    onClick={handleAdd}
-                    disabled={loadingTopic !== null}
-                  >
-                    {loadingTopic ? `"${loadingTopic}" 분석 중…` : results.length === 0 ? '시장 현황 분석' : '키워드 추가'}
-                  </button>
-
-                  {errorMsg && (
-                    <div
-                      className="alert alert-error"
-                      style={{ marginTop: 10, padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 13 }}
-                      role="alert"
-                      aria-live="assertive"
+                <div className="input-panel-header">
+                  <h2 className="input-panel-title">키워드 입력</h2>
+                  <div className="input-panel-header-actions">
+                    <button
+                      type="button"
+                      className="panel-toggle-btn"
+                      onClick={() => setPanelOpen(p => !p)}
+                      aria-expanded={panelOpen}
+                      aria-label={panelOpen ? '입력 패널 접기' : '입력 패널 펼치기'}
                     >
-                      {errorMsg}
-                    </div>
-                  )}
+                      {panelOpen
+                        ? '접기 ▲'
+                        : results.length > 0
+                          ? `키워드 ${results.length}개 · 추가 ▼`
+                          : '펼치기 ▼'}
+                    </button>
+                  </div>
                 </div>
 
-                {results.length > 0 && (
-                  <div className="timing-keyword-list">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <div className="timing-keyword-list-title" style={{ marginBottom: 0 }}>분석된 키워드 ({results.length})</div>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={handleClearAll}
-                        aria-label="분석된 키워드 전체 지우기"
-                        style={{ touchAction: 'manipulation', padding: '4px 10px', fontSize: 12 }}
-                      >
-                        전체 지우기
-                      </button>
-                    </div>
-                    {results.map(r => (
-                      <div
-                        key={r.id}
-                        className={`timing-keyword-item${r.id === selectedId ? ' active' : ''}`}
-                      >
-                        <button
-                          type="button"
-                          className="timing-keyword-select"
-                          onClick={() => setSelectedId(r.id)}
-                          aria-pressed={r.id === selectedId}
-                        >
-                          <div className="timing-keyword-info">
-                            <span className="timing-keyword-name">"{r.topic}"</span>
-                            <span className="timing-keyword-stat">{formatNumber(r.analysis.totalResults)}개 · {formatNumber(r.analysis.avgViews)}회</span>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          className="timing-keyword-remove"
-                          aria-label={`"${r.topic}" 제거`}
-                          onClick={() => handleRemove(r.id)}
-                        >×</button>
+                {panelOpen && (
+                  <>
+                    <div className="input-form">
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="topic-input">영상 주제 또는 키워드</label>
+                        <input
+                          type="search" id="topic-input" name="topic" className="form-input"
+                          placeholder="예: 다이어트, 재테크, 혼자 여행…"
+                          maxLength={60} autoComplete="off" inputMode="search"
+                          value={topic} onChange={e => setTopic(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          disabled={loadingTopic !== null}
+                        />
+                        <span className="form-hint">한 단어 또는 짧은 문장으로 입력하세요.</span>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="form-group">
+                        <span className="form-label" id="timing-content-type-label">콘텐츠 유형</span>
+                        <div className="content-type-toggle" role="group" aria-labelledby="timing-content-type-label">
+                          {['롱폼', '숏폼'].map(type => (
+                            <button
+                              key={type}
+                              type="button"
+                              className={`content-type-btn${contentType === type ? ' active' : ''}`}
+                              onClick={() => setContentType(type)}
+                              aria-pressed={contentType === type}
+                            >
+                              {type === '롱폼' ? '롱폼 (일반 영상)' : '숏폼 (Shorts)'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        className="btn btn-primary btn-full" type="button"
+                        style={{ padding: 13 }}
+                        onClick={handleAdd}
+                        disabled={loadingTopic !== null}
+                      >
+                        {loadingTopic ? `"${loadingTopic}" 분석 중…` : results.length === 0 ? '시장 현황 분석' : '키워드 추가'}
+                      </button>
+
+                      {errorMsg && (
+                        <div
+                          className="alert alert-error"
+                          style={{ marginTop: 10, padding: '10px 14px', borderRadius: 'var(--radius-md)', fontSize: 13 }}
+                          role="alert"
+                          aria-live="assertive"
+                        >
+                          {errorMsg}
+                        </div>
+                      )}
+                    </div>
+
+                    {results.length > 0 && (
+                      <div className="timing-keyword-list">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <div className="timing-keyword-list-title" style={{ marginBottom: 0 }}>분석된 키워드 ({results.length})</div>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={handleClearAll}
+                            aria-label="분석된 키워드 전체 지우기"
+                            style={{ touchAction: 'manipulation' }}
+                          >
+                            전체 지우기
+                          </button>
+                        </div>
+                        {results.map(r => (
+                          <div
+                            key={r.id}
+                            className={`timing-keyword-item${r.id === selectedId ? ' active' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="timing-keyword-select"
+                              onClick={() => setSelectedId(r.id)}
+                              aria-pressed={r.id === selectedId}
+                            >
+                              <div className="timing-keyword-info">
+                                <span className="timing-keyword-name">"{r.topic}"</span>
+                                <span className="timing-keyword-stat">{formatNumber(r.analysis.totalResults)}개 · {formatNumber(r.analysis.avgViews)}회</span>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              className="timing-keyword-remove"
+                              aria-label={`"${r.topic}" 제거`}
+                              onClick={() => handleRemove(r.id)}
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </aside>
 
