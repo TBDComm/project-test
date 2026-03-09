@@ -12,6 +12,9 @@ export function canUseFeature(userData, feature) {
   if (feature === 'timing') {
     return plan === 'starter' || plan === 'pro'
   }
+  if (feature === 'channelAnalysis') {
+    return plan === 'starter' || plan === 'pro'
+  }
   return false
 }
 

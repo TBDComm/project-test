@@ -3,7 +3,7 @@
 // 환경변수 YOUTUBE_API_KEY 는 Cloudflare Pages 대시보드에서 설정
 //   Settings → Environment variables → YOUTUBE_API_KEY
 
-const ALLOWED_ENDPOINTS = ['videos', 'search'];
+const ALLOWED_ENDPOINTS = ['videos', 'search', 'channels'];
 
 export async function onRequest(context) {
   const url = new URL(context.request.url);

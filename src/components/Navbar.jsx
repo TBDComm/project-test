@@ -76,6 +76,7 @@ export default function Navbar() {
             <Link to="/dashboard" className={`nav-link${isActive('/dashboard') ? ' active' : ''}`}>대시보드</Link>
             <Link to="/spotlight" className={`nav-link${isActive('/spotlight') ? ' active' : ''}`}>Spotlight</Link>
             <Link to="/timing"    className={`nav-link${isActive('/timing')    ? ' active' : ''}`}>Timing</Link>
+            <Link to="/channel"   className={`nav-link${isActive('/channel')   ? ' active' : ''}`}>채널 분석</Link>
             <Link to="/pricing"   className={`nav-link${isActive('/pricing')   ? ' active' : ''}`}>요금제</Link>
           </div>
           <div className="nav-actions">

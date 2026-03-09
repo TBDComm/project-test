@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { PLANS } from '../lib/constants'
-import { getRemainingUses } from '../lib/plan'
+import { getRemainingUses, canUseFeature } from '../lib/plan'
 
 export default function Dashboard() {
   const { user, userData } = useAuth()
@@ -24,6 +24,7 @@ export default function Dashboard() {
     : '모든 기능 포함'
 
   const canTiming = plan === 'starter' || plan === 'pro' || isAdmin
+  const canChannel = canUseFeature(userData, 'channelAnalysis')
 
   let subStatus = '미구독'
   let subNote = ''
@@ -99,6 +100,27 @@ export default function Dashboard() {
             <div className="action-footer">
               {canTiming ? (
                 <span className="action-cta">리포트{"\u00A0"}보기 <span aria-hidden="true">→</span></span>
+              ) : (
+                <>
+                  <span className="action-cta" style={{ color: 'var(--text-3)' }}>업그레이드{"\u00A0"}필요</span>
+                  <span className="lock-badge">STARTER+</span>
+                </>
+              )}
+            </div>
+          </Link>
+
+          <Link
+            to={canChannel ? '/channel' : '/pricing'}
+            className={`action-card${canChannel ? '' : ' locked'}`}
+          >
+            <div className="action-icon" aria-hidden="true">◈</div>
+            <div>
+              <div className="action-name">채널 분석</div>
+              <div className="action-desc">내 채널 최근 영상들이 현재 트렌드에서 얼마나 멀어지고 있는지, 영상별 적합도 점수와 추이를 보여드립니다.</div>
+            </div>
+            <div className="action-footer">
+              {canChannel ? (
+                <span className="action-cta">채널{"\u00A0"}분석하기 <span aria-hidden="true">→</span></span>
               ) : (
                 <>
                   <span className="action-cta" style={{ color: 'var(--text-3)' }}>업그레이드{"\u00A0"}필요</span>
